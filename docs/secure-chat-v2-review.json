@@ -1,0 +1,152 @@
+{
+  "en": {
+    "layers": [
+      [
+        "01",
+        "Temporary identity",
+        "The browser generates a separate chat identity with Ed25519 signatures and an MLS KeyPackage. A basic MLS credential contains SHA-256 of its signing public key. Profiles bind the nickname to that key with a signature scoped to this conversation and its deadline. The browser checks case-insensitive nickname uniqueness; the full fingerprint identifies the temporary key, not a real person."
+      ],
+      [
+        "02",
+        "Invitation and admission",
+        "A link contains a random 256-bit secret, a random conversation ID, the founding signing key and the shared expiry after #. This fragment is removed from the current history entry. HKDF-SHA-256 derives separate bootstrap-encryption and transport-capability keys. The original secret is never submitted to the relay. The founder signs the encrypted chat name. The anchor gives no administrative privileges. Every roster carries signed admission certificates chained to this founding key; an invitation holder cannot replace the group with an unrelated founder."
+      ],
+      [
+        "03",
+        "Joining without an account",
+        "A separate browser-generated P-256 transport key signs a single-use, 60-second challenge bound to the origin, conversation, expiry, public transport key, capability hash and creation manifest. The relay consumes it before verification, then issues a 256-bit bearer token. A guest submits an encrypted, signed one-time MLS KeyPackage. An online participant automatically admits it through an MLS Add commit and an HPKE-protected Welcome. New guests receive future messages, without earlier history. All participants have the same capabilities. The full KeyPackage signature and MLS proposal are validated before taking a write lease. Invalid requests are rejected without closing existing participants; abandoned reservations expire after two minutes."
+      ],
+      [
+        "04",
+        "Messaging Layer Security",
+        "The pinned implementation is ts-mls 1.6.4, using RFC 9420 suite MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519: X25519, AES-128-GCM, SHA-256 and Ed25519. MLS authenticates the group transcript and derives separate message generations. An additional application signature binds the sender fingerprint, message ID, text, epoch, conversation and deadline. Clients verify everything before rendering plain text. Public MLS messages, unsupported proposals and incomplete or trailing wire data are rejected. The application sender must match the cryptographically authenticated MLS leaf, preventing a participant from rewrapping another person’s signed text."
+      ],
+      [
+        "05",
+        "Key updates and state discipline",
+        "Joining changes the MLS epoch. Each active client also refreshes its own leaf approximately every five minutes; a newly admitted client refreshes on its next poll. Old epochs and consumed message generations are not retained. There is no automatic cryptographic rollback. Clients serialize their operations, acquire a short relay write lease before encrypting, and retry only the identical ciphertext. If publication remains uncertain, the tab discards its keys and asks the user to rejoin. A small pinned-version adapter explicitly strips historical epoch state and preserves the authenticated sender; it does not rely on the library’s zero-retention default, which was found insufficient during review."
+      ],
+      [
+        "06",
+        "One deadline",
+        "The creator chooses one name and receives one invitation. A key is bound to one conversation. Everyone shares the deadline, at most 24 hours after creation; joins and key updates cannot extend it. The relay cleans expired rooms, ciphertext, grants, challenges and bindings every second and on requests. It has no chat database, disk archive or backup. Restarting it clears active chats sooner. The relay keeps at most 256 events or 1,000,000 encoded characters per conversation; clients retain at most 256 readable messages in memory."
+      ],
+      [
+        "07",
+        "Metadata minimization",
+        "Nicknames, the chat name, MLS KeyPackages and roster bundles are encrypted before reaching the relay. The relay sees temporary transport identifiers, the routing group, membership operations, packet sizes and timing. Short application messages are padded to a 1,024-byte MLS content target; larger messages still reveal size differences. There are no chat cookies, localStorage, IndexedDB, analytics, private-key uploads or attachments."
+      ],
+      [
+        "08",
+        "Containment and resource limits",
+        "The relay runs separately with no site files, secrets, persistent volume, published port or ordinary Internet egress. Its root filesystem is read-only; it runs as a non-root user with all Linux capabilities dropped, no-new-privileges, 192 MiB memory, one CPU and 32 processes. The gateway uses a fixed internal destination and strips client-IP headers and cookies. Bounds include 16 conversations, 16 admitted transport identities per conversation, 256 sessions, 512 key bindings, 64 challenges, eight pending joins per conversation, four parallel signature verifications and 16 MB of retained event strings globally."
+      ],
+      [
+        "09",
+        "Optional Tor route",
+        "Tor Browser can open the dedicated v3 onion service. It uses the same server and the Tor network; no second rented relay or exit node is needed. A separate restricted Tor service forwards only to a loopback chat gateway. The onion route exposes the chat, security page and required static assets, not the site’s other APIs. The Tor service identity persists so the public address stays stable; it contains no chat history. HTTPS and onion hosts are explicitly allowlisted, with same-origin checks on each."
+      ]
+    ],
+    "limits": [
+      [
+        "Forward secrecy has specific conditions",
+        "Consumed generations and old epochs are discarded. A copied participant state is not healed merely because another member updates. Recovery requires that the affected participant makes an honest update after the attacker loses access to its device. This suite is classical, not post-quantum. There is no claim of security superior or equivalent to Signal, and no independent audit of this integration or the selected ts-mls release is asserted."
+      ],
+      [
+        "The delivered client remains trusted",
+        "A compromised website, extension, browser or device can steal plaintext and live keys. MLS does not fix hostile JavaScript delivered by the operator. A malicious relay can delay, suppress or partition traffic; transcript comparison helps participants notice divergent views but is not an external transparency service. Compare full key fingerprints and conversation codes through another trusted channel."
+      ],
+      [
+        "An invitation grants access",
+        "Anyone with the full link can join while a participant is online and capacity remains. There is no revocation, moderation or recovery backdoor. Closing a tab does not revoke a copied invitation. If every participant loses their keys, the existing conversation cannot be reconstructed by the server. A returning user creates a new temporary identity."
+      ],
+      [
+        "Deletion is bounded by the endpoints",
+        "Expiry removes active application references and best-effort wipes mutable key buffers. JavaScript and browser memory do not guarantee physical zeroization. Recipients can keep messages or screenshots. A malicious host can record ciphertext or metadata. There is no application recovery service, but code cannot erase copies held elsewhere."
+      ],
+      [
+        "Anonymity is not invisibility",
+        "Ordinary HTTPS exposes a peer address to the network endpoint even when access logs are disabled. A VPN replaces that address with the provider’s exit address. Tor Browser can separate your access network from the destination; timing correlation, an exposed invitation and a compromised endpoint remain risks. Transport identifiers and traffic patterns remain visible to the relay."
+      ],
+      [
+        "Availability is deliberately bounded",
+        "Global and per-session quotas reduce overload without storing IP addresses; fresh keys can still be used for Sybil attacks. A malicious invited participant can disrupt a conversation. Guests need an existing participant online within the two-minute admission window. A tab that misses more than the retained event window must rejoin with a fresh key. Encryption does not guarantee delivery or protection from denial of service."
+      ]
+    ]
+  },
+  "ru": {
+    "layers": [
+      [
+        "01",
+        "Временная личность",
+        "Браузер создаёт отдельный ключ чата для подписей Ed25519 и одноразовый MLS KeyPackage. Базовое удостоверение MLS содержит SHA-256 публичного ключа подписи. Подписанный профиль связывает никнейм, ключ, конкретную беседу и её срок. Клиент проверяет уникальность никнеймов без учёта регистра. Полный отпечаток определяет временный ключ, а не личность человека."
+      ],
+      [
+        "02",
+        "Секрет приглашения",
+        "Ссылка содержит случайный секрет длиной 256 бит, случайный идентификатор беседы, первый публичный ключ подписи и общий срок после #. Фрагмент удаляется из текущей записи истории. HKDF-SHA-256 выводит отдельные ключи для шифрования подключения и допуска к транспортному серверу. Исходный секрет серверу не передаётся. Первый участник подписывает зашифрованное название; особых прав этот ключ не даёт. Список участников содержит подписанную цепочку допуска, привязанную к первому ключу: обладатель ссылки не может подменить беседу группой с другим основателем."
+      ],
+      [
+        "03",
+        "Вход без аккаунта",
+        "Отдельный транспортный ключ P-256, созданный в браузере, подписывает одноразовый запрос со сроком 60 секунд. В нём закреплены origin, беседа, срок, публичный транспортный ключ, хеш допуска и данные создания. Сервер удаляет запрос до проверки и выдаёт случайный токен длиной 256 бит. Гость передаёт зашифрованный подписанный MLS KeyPackage. Участник с открытой вкладкой автоматически добавляет его через MLS Add и защищённый HPKE пакет Welcome. Гость получает будущие сообщения без прежней истории. Возможности у всех одинаковые. Подпись всего KeyPackage и MLS-предложение проверяются до захвата права записи. Повреждённый запрос отклоняется без отключения участников; незавершённый вход освобождает место через две минуты."
+      ],
+      [
+        "04",
+        "Messaging Layer Security",
+        "Используется закреплённая версия ts-mls 1.6.4 и набор RFC 9420 MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519: X25519, AES-128-GCM, SHA-256 и Ed25519. MLS проверяет целостность группового протокола и выводит отдельные поколения ключей сообщений. Дополнительная подпись связывает отпечаток отправителя, идентификатор, текст, беседу и срок. Проверки выполняются до показа текста. Публичные MLS-сообщения, неподдерживаемые операции, оборванные пакеты и лишние байты отклоняются. Подпись приложения также связана с эпохой, а отправитель сверяется с аутентифицированным MLS-ключом: участник не может заново упаковать чужой текст и выдать его за сообщение автора."
+      ],
+      [
+        "05",
+        "Обновление ключей",
+        "Подключение гостя меняет эпоху MLS. Каждый активный клиент также обновляет собственный ключ примерно раз в пять минут; новый участник делает это при следующем опросе. Прежние эпохи и использованные поколения ключей не сохраняются. Операции клиента последовательны. До шифрования он получает краткосрочное право записи на сервере; при сбое повторяется только тот же шифротекст. Если результат отправки остаётся неизвестным, вкладка уничтожает своё состояние и предлагает подключиться заново. Отката криптографического состояния нет. Небольшой адаптер закреплённой версии явно исключает старые эпохи и сохраняет проверенного отправителя. Настройки нулевого хранения библиотеки оказалось недостаточно — это выявлено и исправлено при проверке."
+      ],
+      [
+        "06",
+        "Общий срок",
+        "Создатель задаёт одно название и получает одну ссылку. Ключ связан только с одной беседой. У всех общий срок — не более 24 часов с создания. Подключения и обновления ключей не продлевают его. Раз в секунду и при запросах сервер удаляет истёкшие беседы, шифротекст, допуски, запросы на подпись и привязки. Нет базы чата, файлового архива и резервных копий. Перезапуск очищает активные беседы раньше. Сервер хранит не более 256 событий или 1 000 000 символов зашифрованных событий на беседу, вкладка — не более 256 прочитанных сообщений в памяти."
+      ],
+      [
+        "07",
+        "Минимум метаданных",
+        "Никнеймы, название беседы, MLS KeyPackage и списки участников шифруются до передачи. Сервер видит временные транспортные идентификаторы, связь с беседой, операции подключения, размеры пакетов и время. Короткие сообщения дополняются до целевого размера MLS-содержимого в 1 024 байта; более длинные всё ещё различаются по размеру. Чат не использует cookies, localStorage, IndexedDB, аналитику, загрузку приватных ключей и вложения."
+      ],
+      [
+        "08",
+        "Изоляция и лимиты",
+        "Отдельный relay-контейнер не получает файлы и секреты сайта, постоянный диск, опубликованный порт или обычный выход в интернет. Файловая система только для чтения, пользователь без root, все Linux capabilities сняты, no-new-privileges; лимиты — 192 МиБ памяти, одно ядро и 32 процесса. Шлюз обращается к фиксированному внутреннему адресу и не передаёт IP-заголовки и cookies. Ограничения: 16 бесед, 16 допущенных транспортных идентификаторов на беседу, 256 сессий, 512 привязок ключей, 64 запроса на подпись, восемь ожидающих гостей на беседу, четыре параллельные проверки подписи и 16 МБ строк событий на весь relay."
+      ],
+      [
+        "09",
+        "Отдельный вход через Tor",
+        "В Tor Browser можно открыть отдельный v3 onion-адрес. Используются тот же сервер и сеть Tor; второй арендованный узел и выходной узел не нужны. Ограниченный Tor-сервис передаёт запросы только локальному шлюзу чата. Onion-маршрут открывает чат, security и необходимые статические ресурсы, но не остальные API сайта. Ключ самого onion-сервиса хранится постоянно для стабильного адреса и не содержит переписки. HTTPS- и onion-адреса разрешаются явно, с отдельной проверкой Origin."
+      ]
+    ],
+    "limits": [
+      [
+        "У прямой секретности есть условия",
+        "Использованные поколения ключей и прежние эпохи удаляются. Копия состояния участника не перестаёт работать только потому, что обновился другой участник. Для восстановления защиты нужен честный выпуск нового ключа пострадавшим клиентом после потери злоумышленником доступа к устройству. Этот набор алгоритмов не постквантовый. Мы не заявляем превосходство или эквивалентность Signal и не выдаём эту интеграцию или ts-mls за независимо проверенную реализацию."
+      ],
+      [
+        "Клиентский код остаётся точкой доверия",
+        "Взломанный сайт, расширение, браузер или устройство могут похитить текст и действующие ключи. MLS не защищает от вредоносного JavaScript, выданного владельцем сервера. Недобросовестный relay может задерживать, скрывать или разделять доставку. Сравнение кода беседы помогает заметить разные состояния, но не заменяет внешний журнал прозрачности. Полные отпечатки и код беседы следует сверять через другой доверенный канал."
+      ],
+      [
+        "Ссылка даёт доступ",
+        "Любой обладатель полной ссылки может войти, пока участник онлайн и есть место. Отзыва доступа, модерации и служебного восстановления нет. Закрытие вкладки не отзывает скопированное приглашение. Если все потеряли ключи, сервер не восстановит беседу. Вернувшийся пользователь создаёт новую временную личность."
+      ],
+      [
+        "Удаление ограничено участниками системы",
+        "При истечении срока приложение удаляет активные ссылки на состояние и по возможности обнуляет изменяемые буферы ключей. JavaScript и браузер не гарантируют физическое стирание памяти. Участники могут сохранить сообщения и снимки экрана, а недобросовестный хост — записать шифротекст или метаданные. Восстановления средствами приложения нет, но чужие копии код удалить не может."
+      ],
+      [
+        "Анонимность не означает невидимость",
+        "При обычном HTTPS сетевой узел видит адрес подключения даже без access-логов. VPN заменяет его адресом своего выхода. Tor Browser может разделить сеть пользователя и адрес назначения; корреляция времени, раскрытая ссылка и взломанный клиент всё равно остаются рисками. Транспортные идентификаторы и рисунок трафика доступны relay."
+      ],
+      [
+        "Доступность ограничена намеренно",
+        "Общие квоты и лимиты сессий снижают перегрузку без хранения IP, но не исключают массовое создание ключей. Приглашённый злоумышленник может мешать беседе. Для подключения гостя нужен участник онлайн в течение двухминутного окна. Вкладке, пропустившей больше сохранённого окна событий, нужен новый ключ. Шифрование не гарантирует доставку и защиту от отказа в обслуживании."
+      ]
+    ]
+  }
+}

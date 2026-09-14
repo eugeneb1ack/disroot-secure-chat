@@ -1,0 +1,16 @@
+# The persistent directory contains the service identity, never chat state.
+DataDirectory /var/lib/disroot-chat-tor/state
+HiddenServiceDir /var/lib/disroot-chat-tor/onion
+HiddenServiceVersion 3
+HiddenServicePort 80 127.0.0.1:19080
+SocksPort 0
+ClientOnly 1
+SafeLogging 1
+AvoidDiskWrites 1
+Log err stderr
+# Optional Snowflake fallback for networks that block direct Tor connections.
+UseBridges 1
+ClientTransportPlugin snowflake exec /usr/bin/snowflake-client -url https://1098762253.rsc.cdn77.org/ -front www.cdn77.com -ice stun:stun.antisip.com:3478,stun:stun.epygi.com:3478,stun:stun.voipgate.com:3478
+Bridge snowflake 192.0.2.3:80 2B280B23E1107BB62ABFC40DDCC8824814F80A72
+ControlSocket /var/lib/disroot-chat-tor/control
+CookieAuthentication 1

@@ -1,0 +1,41 @@
+services:
+  disrootsite:
+    build: .
+    ports: ["127.0.0.1:3000:3000"]
+    environment:
+      SECURE_CHAT_ORIGIN: "${CHAT_ORIGIN:-}"
+      SECURE_CHAT_ONION_ORIGIN: "${SECURE_CHAT_ONION_ORIGIN:-}"
+      SECURE_CHAT_LOCAL_PREVIEW: "${CHAT_LOCAL_PREVIEW:-0}"
+      SECURE_CHAT_RELAY_URL: http://secure-chat-relay:3000
+    networks: [default, chat-isolated]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:size=64m,noexec,nosuid", "/app/.next/cache:size=32m,noexec,nosuid"]
+    mem_limit: 256m
+    memswap_limit: 256m
+    pids_limit: 64
+    ulimits: {core: 0}
+    logging: {driver: none}
+    restart: unless-stopped
+    depends_on:
+      secure-chat-relay: {condition: service_healthy}
+  secure-chat-relay:
+    build: {context: ., dockerfile: Dockerfile.chat-relay}
+    environment:
+      SECURE_CHAT_ORIGIN: "${CHAT_ORIGIN:-}"
+      SECURE_CHAT_ONION_ORIGIN: "${SECURE_CHAT_ONION_ORIGIN:-}"
+      SECURE_CHAT_LOCAL_PREVIEW: "${CHAT_LOCAL_PREVIEW:-0}"
+    networks: [chat-isolated]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 192m
+    memswap_limit: 192m
+    cpus: 1
+    pids_limit: 32
+    ulimits: {core: 0}
+    logging: {driver: none}
+    restart: unless-stopped
+networks:
+  chat-isolated: {internal: true}

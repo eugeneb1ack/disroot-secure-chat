@@ -1,0 +1,297 @@
+{
+  "schema": "disroot-chat-security-tests/v1",
+  "generatedAt": "2026-09-14T13:46:20.596Z",
+  "runtime": "v26.8.2",
+  "platform": "darwin/arm64",
+  "classification": "Automated self-tests; not an independent audit or proof of security",
+  "gitHead": "",
+  "sourceSha256": {
+    "lib/secure-chat-protocol.ts": "17e2b49cad8262f68307f56c136b55833ce17e9c1ee48ab49395850db74b5261",
+    "lib/secure-chat-invite.ts": "d446fe4d2c98b924313f5bce3f98975a7b05abb35306239851f2bc66244d7c3c",
+    "lib/secure-chat-mls.ts": "463f26c1d170382adc9183b6a454a83915bd51538b0f03bc6d8378cde29aee1a",
+    "lib/secure-chat-mls-adapter.ts": "32545ce180774d80daf5aaf112ed554dbdc9a0b99b3736abd4e9d94c0572c46b",
+    "lib/secure-chat-client.ts": "3d2685246bfe39886fe4943a5088e6fbaadb06a3467a134091c9360b2b22936d",
+    "lib/secure-chat-store.ts": "9acaeff37f65c42cb8d3fb40b420d6077d3e88ca86962feb6fb9a63209876a05",
+    "lib/secure-chat-handler.ts": "ba989b31d21e67d0d20a80031c5cc30fe7b7a56625d43c027f7a2ef9414d5b6d",
+    "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
+    "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
+    "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
+    "lib/secure-chat-v2.test.mjs": "1c6a8e90e6f5c57a5e4dc6de1488275b3be7b4a5dfa4440bea5325cf82f6ef52",
+    "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
+    "package-lock.json": "dff6b582344010d2207e57c8d67781ff16fadc6d6e519a460cac48e6a9d332dd"
+  },
+  "passed": true,
+  "total": 61,
+  "results": [
+    {
+      "suite": "Production integration and hostile inputs",
+      "command": "node --experimental-strip-types --test --test-reporter=tap lib/secure-chat-v2.test.mjs",
+      "exitCode": 0,
+      "passed": true,
+      "tests": [
+        {
+          "name": "production clients: creator remains in the same chat after a guest joins",
+          "passed": true
+        },
+        {
+          "name": "production clients: bidirectional Unicode and emoji survive relay serialization",
+          "passed": true
+        },
+        {
+          "name": "a third client joins through a non-founder and cannot read earlier messages",
+          "passed": true
+        },
+        {
+          "name": "lost publish acknowledgement retries identical wire and appends once",
+          "passed": true
+        },
+        {
+          "name": "uncertain writes discard the session instead of reusing MLS generations",
+          "passed": true
+        },
+        {
+          "name": "expired write lease fails closed after encryption",
+          "passed": true
+        },
+        {
+          "name": "simultaneous sends serialize without duplicate delivery",
+          "passed": true
+        },
+        {
+          "name": "nickname and cleartext never enter the production relay state or request bodies",
+          "passed": true
+        },
+        {
+          "name": "the invitation secret is domain-separated from the transport capability",
+          "passed": true
+        },
+        {
+          "name": "invitation parser rejects duplicates, downgrade, expired and oversized links",
+          "passed": true
+        },
+        {
+          "name": "bootstrap AEAD binds packet purpose and room deadline",
+          "passed": true
+        },
+        {
+          "name": "tampered manifest and wrong founder anchor are rejected",
+          "passed": true
+        },
+        {
+          "name": "one-use login challenge rejects replays and concurrent authentication",
+          "passed": true
+        },
+        {
+          "name": "invalid signature consumes a challenge and cannot be retried with the correct key",
+          "passed": true
+        },
+        {
+          "name": "login challenge binds the browser origin",
+          "passed": true
+        },
+        {
+          "name": "private transport JWK fields are rejected before importing a key",
+          "passed": true
+        },
+        {
+          "name": "a transport key cannot create a second conversation",
+          "passed": true
+        },
+        {
+          "name": "wrong invitation capability and extended deadline cannot join",
+          "passed": true
+        },
+        {
+          "name": "24-hour cleanup removes room, messages, sessions, pending joins and bindings",
+          "passed": true
+        },
+        {
+          "name": "join and key updates do not extend the shared deadline",
+          "passed": true
+        },
+        {
+          "name": "challenge floods are bounded without IP storage",
+          "passed": true
+        },
+        {
+          "name": "cross-site Origin, fetch-site and unconfigured Host are denied",
+          "passed": true
+        },
+        {
+          "name": "API rejects malformed JSON, oversize body and legacy admin actions",
+          "passed": true
+        },
+        {
+          "name": "MLS rejects a replayed message and accepts the following generation",
+          "passed": true
+        },
+        {
+          "name": "tampered ciphertext fails without consuming the valid generation",
+          "passed": true
+        },
+        {
+          "name": "message identifier substitution fails even with valid MLS ciphertext",
+          "passed": true
+        },
+        {
+          "name": "MLS framing rejects truncated, trailing and noncanonical base64 data",
+          "passed": true
+        },
+        {
+          "name": "an invitation holder cannot substitute another participant's signed nickname",
+          "passed": true
+        },
+        {
+          "name": "case-insensitive nickname collisions cannot enter the verified roster",
+          "passed": true
+        },
+        {
+          "name": "Welcome is one-use and cannot be consumed by a different KeyPackage",
+          "passed": true
+        },
+        {
+          "name": "a pending encrypted packet blocks generation of a second ciphertext",
+          "passed": true
+        },
+        {
+          "name": "padding equalizes two short application messages",
+          "passed": true
+        },
+        {
+          "name": "closing the client clears its active identity state and invitation secret",
+          "passed": true
+        },
+        {
+          "name": "bounded parser fuzz: 256 deterministic malformed MLS packets never render text",
+          "passed": true
+        },
+        {
+          "name": "integrity mutation matrix: 32 ciphertext bit flips are rejected",
+          "passed": true
+        },
+        {
+          "name": "an old relay snapshot cannot roll back a live client's cursor",
+          "passed": true
+        },
+        {
+          "name": "a substituted event packet closes the client without rendering unverified text",
+          "passed": true
+        },
+        {
+          "name": "unknown bearer token cannot read, claim, publish or enumerate a room",
+          "passed": true
+        },
+        {
+          "name": "cross-conversation packets cannot decrypt even with a reused message id",
+          "passed": true
+        },
+        {
+          "name": "audit regression: an invitation holder's alternate MLS group lacks the pinned founder",
+          "passed": true
+        },
+        {
+          "name": "audit regression: a real founder roster without a valid admission chain is rejected",
+          "passed": true
+        },
+        {
+          "name": "audit regression: an admitted peer cannot rewrap Alice's signed text as its MLS message",
+          "passed": true
+        },
+        {
+          "name": "audit regression: a signed request with an invalid inner KeyPackage cannot close incumbents",
+          "passed": true
+        },
+        {
+          "name": "audit regression: current state drops withheld prior-epoch ciphertext after refresh",
+          "passed": true
+        },
+        {
+          "name": "audit regression: the state adapter discards retained old epochs without aliasing live secrets",
+          "passed": true
+        },
+        {
+          "name": "audit regression: repeated unadmitted logouts release all member reservations",
+          "passed": true
+        },
+        {
+          "name": "audit regression: an abandoned login without enqueue expires after two minutes",
+          "passed": true
+        },
+        {
+          "name": "audit regression: sixteen full relay windows keep accepting bounded replacement writes",
+          "passed": true
+        },
+        {
+          "name": "simultaneous incumbent admission attempts leave all three clients usable",
+          "passed": true
+        },
+        {
+          "name": "closing during asynchronous key refresh cannot resurrect a cryptographic session",
+          "passed": true
+        },
+        {
+          "name": "sixteen real MLS participants fit the relay packet budgets and exchange text",
+          "passed": true
+        },
+        {
+          "name": "only the configured v3 onion authority is allowed, with exact same-origin POST",
+          "passed": true
+        }
+      ],
+      "artifact": "integration.tap"
+    },
+    {
+      "suite": "MLS retention and compromise scenarios (laboratory fixtures)",
+      "command": "node --experimental-strip-types --test --test-reporter=tap tests/secure-chat/ratchet.test.mjs",
+      "exitCode": 0,
+      "passed": true,
+      "tests": [
+        {
+          "name": "three independent clients exchange serialized, encrypted Unicode messages",
+          "passed": true
+        },
+        {
+          "name": "a later member cannot process pre-join ciphertext but can read new messages",
+          "passed": true
+        },
+        {
+          "name": "copied state before consumption reads a message; current consumed state rejects it",
+          "passed": true
+        },
+        {
+          "name": "another member's refresh does not heal a copied participant state",
+          "passed": true
+        },
+        {
+          "name": "the compromised participant's honest refresh prevents its old snapshot following the new epoch",
+          "passed": true
+        },
+        {
+          "name": "a different key cannot reuse a pinned identity",
+          "passed": true
+        },
+        {
+          "name": "tampered wire data is rejected without consuming the valid message",
+          "passed": true
+        },
+        {
+          "name": "framing rejects trailing bytes and padding hides the difference between two short texts",
+          "passed": true
+        },
+        {
+          "name": "local crypto timing sample (not browser or network latency)",
+          "passed": true
+        }
+      ],
+      "artifact": "mls-ratchet.tap"
+    }
+  ],
+  "limits": [
+    "The source hashes identify the tested files, including uncommitted work. gitHead alone does not identify this build.",
+    "Expiry is tested by advancing an injected relay clock; this is not a 24-hour endurance test.",
+    "The parser test contains 256 deterministic malformed packets; the integrity test mutates 32 ciphertext bytes. These are bounded negative tests, not exhaustive fuzzing.",
+    "Compromise fixtures exercise pinned ts-mls 1.6.4. They are not a formal proof, interoperability certification, post-quantum validation or independent cryptographic audit.",
+    "The timing sample measures local Node cryptography, not browser or network latency.",
+    "Browser, HTTP and deployment checks are recorded separately and are not implied by this report."
+  ]
+}

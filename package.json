@@ -1,0 +1,39 @@
+{
+  "name": "disroot-secure-chat",
+  "version": "1.0.0",
+  "description": "Ephemeral browser MLS chat with a bounded, memory-only relay.",
+  "scripts": {
+    "dev": "next dev",
+    "dev:chat": "node scripts/start-secure-chat-dev.mjs",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test:chat": "node --experimental-strip-types --test lib/secure-chat-v2.test.mjs",
+    "test:chat:mls": "node --test tests/secure-chat/ratchet.test.mjs",
+    "test:chat:report": "node scripts/security-report.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": false,
+  "dependencies": {
+    "@noble/hashes": "2.3.0",
+    "animejs": "^4.4.1",
+    "next": "^16.3.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "ts-mls": "1.6.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.3.3",
+    "typescript": "^6.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eugeneb1ack/disroot-secure-chat.git"
+  }
+}

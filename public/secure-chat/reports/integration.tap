@@ -1,0 +1,326 @@
+TAP version 13
+# (node:58594) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///private/tmp/disroot-secure-chat-public/lib/secure-chat-store.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /private/tmp/disroot-secure-chat-public/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: production clients: creator remains in the same chat after a guest joins
+ok 1 - production clients: creator remains in the same chat after a guest joins
+  ---
+  duration_ms: 70.572791
+  type: 'test'
+  ...
+# Subtest: production clients: bidirectional Unicode and emoji survive relay serialization
+ok 2 - production clients: bidirectional Unicode and emoji survive relay serialization
+  ---
+  duration_ms: 39.040167
+  type: 'test'
+  ...
+# Subtest: a third client joins through a non-founder and cannot read earlier messages
+ok 3 - a third client joins through a non-founder and cannot read earlier messages
+  ---
+  duration_ms: 77.6435
+  type: 'test'
+  ...
+# Subtest: lost publish acknowledgement retries identical wire and appends once
+ok 4 - lost publish acknowledgement retries identical wire and appends once
+  ---
+  duration_ms: 30.949875
+  type: 'test'
+  ...
+# Subtest: uncertain writes discard the session instead of reusing MLS generations
+ok 5 - uncertain writes discard the session instead of reusing MLS generations
+  ---
+  duration_ms: 29.196458
+  type: 'test'
+  ...
+# Subtest: expired write lease fails closed after encryption
+ok 6 - expired write lease fails closed after encryption
+  ---
+  duration_ms: 28.780958
+  type: 'test'
+  ...
+# Subtest: simultaneous sends serialize without duplicate delivery
+ok 7 - simultaneous sends serialize without duplicate delivery
+  ---
+  duration_ms: 34.195791
+  type: 'test'
+  ...
+# Subtest: nickname and cleartext never enter the production relay state or request bodies
+ok 8 - nickname and cleartext never enter the production relay state or request bodies
+  ---
+  duration_ms: 29.566708
+  type: 'test'
+  ...
+# Subtest: the invitation secret is domain-separated from the transport capability
+ok 9 - the invitation secret is domain-separated from the transport capability
+  ---
+  duration_ms: 1.890458
+  type: 'test'
+  ...
+# Subtest: invitation parser rejects duplicates, downgrade, expired and oversized links
+ok 10 - invitation parser rejects duplicates, downgrade, expired and oversized links
+  ---
+  duration_ms: 1.355417
+  type: 'test'
+  ...
+# Subtest: bootstrap AEAD binds packet purpose and room deadline
+ok 11 - bootstrap AEAD binds packet purpose and room deadline
+  ---
+  duration_ms: 1.444875
+  type: 'test'
+  ...
+# Subtest: tampered manifest and wrong founder anchor are rejected
+ok 12 - tampered manifest and wrong founder anchor are rejected
+  ---
+  duration_ms: 2.940417
+  type: 'test'
+  ...
+# Subtest: one-use login challenge rejects replays and concurrent authentication
+ok 13 - one-use login challenge rejects replays and concurrent authentication
+  ---
+  duration_ms: 2.009417
+  type: 'test'
+  ...
+# Subtest: invalid signature consumes a challenge and cannot be retried with the correct key
+ok 14 - invalid signature consumes a challenge and cannot be retried with the correct key
+  ---
+  duration_ms: 1.539
+  type: 'test'
+  ...
+# Subtest: login challenge binds the browser origin
+ok 15 - login challenge binds the browser origin
+  ---
+  duration_ms: 1.319708
+  type: 'test'
+  ...
+# Subtest: private transport JWK fields are rejected before importing a key
+ok 16 - private transport JWK fields are rejected before importing a key
+  ---
+  duration_ms: 1.222958
+  type: 'test'
+  ...
+# Subtest: a transport key cannot create a second conversation
+ok 17 - a transport key cannot create a second conversation
+  ---
+  duration_ms: 2.544667
+  type: 'test'
+  ...
+# Subtest: wrong invitation capability and extended deadline cannot join
+ok 18 - wrong invitation capability and extended deadline cannot join
+  ---
+  duration_ms: 26.75575
+  type: 'test'
+  ...
+# Subtest: 24-hour cleanup removes room, messages, sessions, pending joins and bindings
+ok 19 - 24-hour cleanup removes room, messages, sessions, pending joins and bindings
+  ---
+  duration_ms: 29.275375
+  type: 'test'
+  ...
+# Subtest: join and key updates do not extend the shared deadline
+ok 20 - join and key updates do not extend the shared deadline
+  ---
+  duration_ms: 29.432709
+  type: 'test'
+  ...
+# Subtest: challenge floods are bounded without IP storage
+ok 21 - challenge floods are bounded without IP storage
+  ---
+  duration_ms: 2.321791
+  type: 'test'
+  ...
+# Subtest: cross-site Origin, fetch-site and unconfigured Host are denied
+ok 22 - cross-site Origin, fetch-site and unconfigured Host are denied
+  ---
+  duration_ms: 0.229833
+  type: 'test'
+  ...
+# Subtest: API rejects malformed JSON, oversize body and legacy admin actions
+ok 23 - API rejects malformed JSON, oversize body and legacy admin actions
+  ---
+  duration_ms: 0.558125
+  type: 'test'
+  ...
+# Subtest: MLS rejects a replayed message and accepts the following generation
+ok 24 - MLS rejects a replayed message and accepts the following generation
+  ---
+  duration_ms: 18.212458
+  type: 'test'
+  ...
+# Subtest: tampered ciphertext fails without consuming the valid generation
+ok 25 - tampered ciphertext fails without consuming the valid generation
+  ---
+  duration_ms: 16.353083
+  type: 'test'
+  ...
+# Subtest: message identifier substitution fails even with valid MLS ciphertext
+ok 26 - message identifier substitution fails even with valid MLS ciphertext
+  ---
+  duration_ms: 16.242958
+  type: 'test'
+  ...
+# Subtest: MLS framing rejects truncated, trailing and noncanonical base64 data
+ok 27 - MLS framing rejects truncated, trailing and noncanonical base64 data
+  ---
+  duration_ms: 14.557666
+  type: 'test'
+  ...
+# Subtest: an invitation holder cannot substitute another participant's signed nickname
+ok 28 - an invitation holder cannot substitute another participant's signed nickname
+  ---
+  duration_ms: 14.983583
+  type: 'test'
+  ...
+# Subtest: case-insensitive nickname collisions cannot enter the verified roster
+ok 29 - case-insensitive nickname collisions cannot enter the verified roster
+  ---
+  duration_ms: 13.901333
+  type: 'test'
+  ...
+# Subtest: Welcome is one-use and cannot be consumed by a different KeyPackage
+ok 30 - Welcome is one-use and cannot be consumed by a different KeyPackage
+  ---
+  duration_ms: 15.002584
+  type: 'test'
+  ...
+# Subtest: a pending encrypted packet blocks generation of a second ciphertext
+ok 31 - a pending encrypted packet blocks generation of a second ciphertext
+  ---
+  duration_ms: 14.247291
+  type: 'test'
+  ...
+# Subtest: padding equalizes two short application messages
+ok 32 - padding equalizes two short application messages
+  ---
+  duration_ms: 23.789917
+  type: 'test'
+  ...
+# Subtest: closing the client clears its active identity state and invitation secret
+ok 33 - closing the client clears its active identity state and invitation secret
+  ---
+  duration_ms: 26.050375
+  type: 'test'
+  ...
+# Subtest: bounded parser fuzz: 256 deterministic malformed MLS packets never render text
+ok 34 - bounded parser fuzz: 256 deterministic malformed MLS packets never render text
+  ---
+  duration_ms: 31.41775
+  type: 'test'
+  ...
+# Subtest: integrity mutation matrix: 32 ciphertext bit flips are rejected
+ok 35 - integrity mutation matrix: 32 ciphertext bit flips are rejected
+  ---
+  duration_ms: 32.495875
+  type: 'test'
+  ...
+# Subtest: an old relay snapshot cannot roll back a live client's cursor
+ok 36 - an old relay snapshot cannot roll back a live client's cursor
+  ---
+  duration_ms: 28.399334
+  type: 'test'
+  ...
+# Subtest: a substituted event packet closes the client without rendering unverified text
+ok 37 - a substituted event packet closes the client without rendering unverified text
+  ---
+  duration_ms: 27.609875
+  type: 'test'
+  ...
+# Subtest: unknown bearer token cannot read, claim, publish or enumerate a room
+ok 38 - unknown bearer token cannot read, claim, publish or enumerate a room
+  ---
+  duration_ms: 0.347583
+  type: 'test'
+  ...
+# Subtest: cross-conversation packets cannot decrypt even with a reused message id
+ok 39 - cross-conversation packets cannot decrypt even with a reused message id
+  ---
+  duration_ms: 15.606875
+  type: 'test'
+  ...
+# Subtest: audit regression: an invitation holder's alternate MLS group lacks the pinned founder
+ok 40 - audit regression: an invitation holder's alternate MLS group lacks the pinned founder
+  ---
+  duration_ms: 11.27
+  type: 'test'
+  ...
+# Subtest: audit regression: a real founder roster without a valid admission chain is rejected
+ok 41 - audit regression: a real founder roster without a valid admission chain is rejected
+  ---
+  duration_ms: 12.283291
+  type: 'test'
+  ...
+# Subtest: audit regression: an admitted peer cannot rewrap Alice's signed text as its MLS message
+ok 42 - audit regression: an admitted peer cannot rewrap Alice's signed text as its MLS message
+  ---
+  duration_ms: 15.586708
+  type: 'test'
+  ...
+# Subtest: audit regression: a signed request with an invalid inner KeyPackage cannot close incumbents
+ok 43 - audit regression: a signed request with an invalid inner KeyPackage cannot close incumbents
+  ---
+  duration_ms: 33.587833
+  type: 'test'
+  ...
+# Subtest: audit regression: current state drops withheld prior-epoch ciphertext after refresh
+ok 44 - audit regression: current state drops withheld prior-epoch ciphertext after refresh
+  ---
+  duration_ms: 24.636
+  type: 'test'
+  ...
+# Subtest: audit regression: the state adapter discards retained old epochs without aliasing live secrets
+ok 45 - audit regression: the state adapter discards retained old epochs without aliasing live secrets
+  ---
+  duration_ms: 0.17175
+  type: 'test'
+  ...
+# Subtest: audit regression: repeated unadmitted logouts release all member reservations
+ok 46 - audit regression: repeated unadmitted logouts release all member reservations
+  ---
+  duration_ms: 19.786708
+  type: 'test'
+  ...
+# Subtest: audit regression: an abandoned login without enqueue expires after two minutes
+ok 47 - audit regression: an abandoned login without enqueue expires after two minutes
+  ---
+  duration_ms: 3.113084
+  type: 'test'
+  ...
+# Subtest: audit regression: sixteen full relay windows keep accepting bounded replacement writes
+ok 48 - audit regression: sixteen full relay windows keep accepting bounded replacement writes
+  ---
+  duration_ms: 62.606084
+  type: 'test'
+  ...
+# Subtest: simultaneous incumbent admission attempts leave all three clients usable
+ok 49 - simultaneous incumbent admission attempts leave all three clients usable
+  ---
+  duration_ms: 70.806958
+  type: 'test'
+  ...
+# Subtest: closing during asynchronous key refresh cannot resurrect a cryptographic session
+ok 50 - closing during asynchronous key refresh cannot resurrect a cryptographic session
+  ---
+  duration_ms: 15.880417
+  type: 'test'
+  ...
+# Subtest: sixteen real MLS participants fit the relay packet budgets and exchange text
+ok 51 - sixteen real MLS participants fit the relay packet budgets and exchange text
+  ---
+  duration_ms: 2841.24875
+  type: 'test'
+  ...
+# Subtest: only the configured v3 onion authority is allowed, with exact same-origin POST
+ok 52 - only the configured v3 onion authority is allowed, with exact same-origin POST
+  ---
+  duration_ms: 0.3565
+  type: 'test'
+  ...
+1..52
+# tests 52
+# suites 0
+# pass 52
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4023.796
