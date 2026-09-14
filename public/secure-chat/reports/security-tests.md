@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T15:40:44.927Z
+Generated: 2026-09-14T17:15:25.652Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**77 checks; PASSED. Technical self-review, not an independent audit.**
+**91 checks; PASSED. Technical self-review, not an independent audit.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -82,6 +82,20 @@ Exit: 0. [Raw TAP output](integration.tap).
 - PASS — explicit End session in a mirror destroys the owner's keys and closes other views
 - PASS — an altered invitation cannot discover a live browser session
 - PASS — owner shutdown invalidates mirrored views and cannot be resumed from stale state
+- PASS — presence follows authenticated reads, times out, reconnects and disappears on logout
+- PASS — presence reveals no nicknames or signing fingerprints to the relay
+- PASS — participant connection bindings cannot be copied from another signing identity
+- PASS — a validly signed duplicate transport binding is rejected before the write lease
+- PASS — connection bindings are one-time and client views do not expose mutable profiles
+- PASS — old relays without presence do not fabricate participant status
+- PASS — malformed or oversized presence snapshots fail closed before rendering
+- PASS — orphaned invitations reject new guests instead of leaving everyone waiting
+- PASS — a guest waiting when the last admitted participant leaves receives an explicit error
+- PASS — silent abandoned sessions do not create a misleading new waiting guest
+- PASS — the background session poller admits a guest while its document is hidden
+- PASS — poll wakeups do not overlap and teardown removes event listeners
+- PASS — SPA view detach and return retain identity, history and admission without a new login
+- PASS — invitations preserve the chat document path for same-tab hash navigation
 
 ## MLS retention and compromise scenarios (laboratory fixtures)
 

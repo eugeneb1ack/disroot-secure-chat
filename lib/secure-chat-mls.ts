@@ -117,7 +117,13 @@ export class MlsConversation {
   }
   get ready() { return !!this.#state && !this.#closed; }
   get epoch() { return String(this.#state?.groupContext.epoch ?? BigInt(0)); }
-  get profiles() { return [...this.#profiles.values()].map(value => ({ ...value })); }
+  get profiles() { return structuredClone([...this.#profiles.values()]); }
+  async bindConnection(id: string) {
+    this.check();
+    if (!idPattern.test(id) || this.#state || this.#joinRequest || this.identity.connection) throw new Error("Invalid transport identity binding.");
+    this.identity.connection = { id, signature: await this.sign("connection-v1", this.identity.id, id) };
+    if (this.identity.key === this.invitation.founder) this.#admissions.set(this.identity.id, { member: this.identity.id, by: this.identity.id, signature: await this.sign("admit", this.identity, this.identity.id) });
+  }
   get verification() { return this.#state ? digest(this.#state.groupContext.confirmedTranscriptHash) : ""; }
   private check() { if (this.#closed || Date.now() >= this.invitation.expires) { this.close(); throw new Error("This conversation has expired. Generate a fresh invitation."); } }
   private async sign(kind: string, ...fields: unknown[]) { return b64(await this.#suite.signature.sign(this.#signKey, utf8(context(this.invitation, kind, ...fields)))); }
@@ -151,11 +157,17 @@ export class MlsConversation {
   private async verifyProfile(profile: Profile) {
     if (!profile || !hexPattern.test(profile.id) || !hexPattern.test(profile.key) || !nicknamePattern.test(profile.nickname) || profile.id !== digest(unhex(profile.key))) throw new Error("Invalid participant identity.");
     await this.verify(profile.key, profile.signature, "profile", profile.id, profile.key, profile.nickname);
+    if (profile.connection !== undefined) {
+      if (!profile.connection || Object.keys(profile.connection).sort().join(",") !== "id,signature" || !idPattern.test(profile.connection.id)) throw new Error("Invalid transport identity binding.");
+      await this.verify(profile.key, profile.connection.signature, "connection-v1", profile.id, profile.connection.id);
+    }
   }
   private async validateProfiles(profiles: Profile[], state: ClientState, admissions: Admission[]) {
     if (!Array.isArray(profiles) || profiles.length > MAX_MEMBERS) throw new Error("Invalid participant roster.");
     const keys = state.ratchetTree.flatMap(node => node?.nodeType === "leaf" ? [hex(node.leaf.signaturePublicKey)] : []);
     if (profiles.length !== keys.length || new Set(profiles.map(value => value.id)).size !== profiles.length || new Set(profiles.map(value => value.nickname.toLowerCase())).size !== profiles.length) throw new Error("Conflicting participant identities. No messages were displayed.");
+    const connections = profiles.flatMap(profile => profile.connection ? [profile.connection.id] : []);
+    if (new Set(connections).size !== connections.length) throw new Error("Conflicting transport identities.");
     for (const profile of profiles) {
       await this.verifyProfile(profile);
       if (!keys.includes(profile.key)) throw new Error("Participant key does not belong to the MLS group.");
@@ -183,6 +195,7 @@ export class MlsConversation {
     if (request.id !== id || !idPattern.test(id)) throw new Error("Mismatched join request.");
     await this.verifyProfile(request.profile);
     await this.verify(request.profile.key, request.signature, "join", id, request.profile, request.keyPackage);
+    if (request.profile.connection && this.profiles.some(profile => profile.connection?.id === request.profile.connection!.id)) throw new Error("Conflicting transport identities.");
     if (this.#profiles.size >= MAX_MEMBERS || this.profiles.some(value => value.id === request.profile.id || value.nickname.toLowerCase() === request.profile.nickname.toLowerCase())) throw new Error("That nickname is already in this conversation. Choose another.");
     const parsed = readWire(request.keyPackage);
     if (parsed.wireformat !== "mls_key_package" || hex(parsed.keyPackage.leafNode.signaturePublicKey) !== request.profile.key || parsed.keyPackage.cipherSuite !== SUITE) throw new Error("Join key mismatch.");

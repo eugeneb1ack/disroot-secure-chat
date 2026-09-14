@@ -1,63 +1,63 @@
 TAP version 13
-# (node:70180) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///private/tmp/disroot-secure-chat-public/lib/secure-chat-mls-adapter.ts is not specified and it doesn't parse as CommonJS.
+# (node:75730) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/johndoe/Documents/disrootsite/lib/secure-chat-mls-adapter.ts is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-# To eliminate this warning, add "type": "module" to /private/tmp/disroot-secure-chat-public/package.json.
+# To eliminate this warning, add "type": "module" to /Users/johndoe/Documents/disrootsite/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: three independent clients exchange serialized, encrypted Unicode messages
 ok 1 - three independent clients exchange serialized, encrypted Unicode messages
   ---
-  duration_ms: 40.54325
+  duration_ms: 43.176542
   type: 'test'
   ...
 # Subtest: a later member cannot process pre-join ciphertext but can read new messages
 ok 2 - a later member cannot process pre-join ciphertext but can read new messages
   ---
-  duration_ms: 22.37525
+  duration_ms: 23.451458
   type: 'test'
   ...
 # Subtest: copied state before consumption reads a message; current consumed state rejects it
 ok 3 - copied state before consumption reads a message; current consumed state rejects it
   ---
-  duration_ms: 9.64875
+  duration_ms: 10.597084
   type: 'test'
   ...
 # Subtest: another member's refresh does not heal a copied participant state
 ok 4 - another member's refresh does not heal a copied participant state
   ---
-  duration_ms: 21.028583
+  duration_ms: 21.803667
   type: 'test'
   ...
 # Subtest: the compromised participant's honest refresh prevents its old snapshot following the new epoch
 ok 5 - the compromised participant's honest refresh prevents its old snapshot following the new epoch
   ---
-  duration_ms: 19.511791
+  duration_ms: 18.862458
   type: 'test'
   ...
 # Subtest: a different key cannot reuse a pinned identity
 ok 6 - a different key cannot reuse a pinned identity
   ---
-  duration_ms: 16.847708
+  duration_ms: 16.59475
   type: 'test'
   ...
 # Subtest: tampered wire data is rejected without consuming the valid message
 ok 7 - tampered wire data is rejected without consuming the valid message
   ---
-  duration_ms: 7.772916
+  duration_ms: 10.903834
   type: 'test'
   ...
 # Subtest: framing rejects trailing bytes and padding hides the difference between two short texts
 ok 8 - framing rejects trailing bytes and padding hides the difference between two short texts
   ---
-  duration_ms: 9.06675
+  duration_ms: 9.860458
   type: 'test'
   ...
 # Subtest: local crypto timing sample (not browser or network latency)
 ok 9 - local crypto timing sample (not browser or network latency)
   ---
-  duration_ms: 39.785083
+  duration_ms: 41.255666
   type: 'test'
   ...
-# {"suite":"MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519","engine":"v26.8.2","samples":30,"operation":"serialize + encrypt + decrypt + verify","medianMs":0.96,"p95Ms":1.53}
+# {"suite":"MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519","engine":"v26.8.2","samples":30,"operation":"serialize + encrypt + decrypt + verify","medianMs":0.95,"p95Ms":1.8}
 1..9
 # tests 9
 # suites 0
@@ -66,4 +66,4 @@ ok 9 - local crypto timing sample (not browser or network latency)
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 338.334417
+# duration_ms 350.053708

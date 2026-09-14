@@ -23,6 +23,8 @@ keys + plaintext  ── MLS ──►  ciphertext + routing  ── MLS ──�
 - One shared deadline, at most 16 members. Bounded RAM-only relay storage; no chat database or disk archive.
 - Separate non-root relay container: read-only filesystem, no published port, no site secrets, no ordinary Internet egress, bounded memory/CPU/processes.
 - Responsive EN/RU messenger with a growing composer, emoji picker, encrypted replies/reactions and reduced-motion support.
+- Live participant status with a bounded, authenticated relay heartbeat; signed encrypted transport bindings and explicit orphaned-invitation errors.
+- Preserve the live identity when navigating back to the host site and reopening chat. Background tabs continue admission.
 - Reuse a live session across tabs of the same browser profile and origin; one original tab owns the keys and serializes all MLS writes.
 - Optional Tor v3 onion gateway on the same host. The Tor service identity persists; chat state does not.
 
@@ -41,7 +43,7 @@ CHAT_LOCAL_PREVIEW=1 docker compose up -d --build
 Open [localhost:3000/secure-chat](http://localhost:3000/secure-chat). For a real HTTP check:
 
 ```sh
-CHAT_TEST_ORIGIN=http://127.0.0.1:3000 node --experimental-strip-types scripts/check-secure-chat.mjs
+CHAT_TEST_ORIGIN=http://127.0.0.1:3000 CHAT_TEST_REQUIRE_PRESENCE=1 node --experimental-strip-types scripts/check-secure-chat.mjs
 ```
 
 For development, set `SECURE_CHAT_RELAY_URL=http://127.0.0.1:3003`, run `npm run dev:chat`, then `npm run dev` in another terminal.
@@ -63,3 +65,5 @@ The shared deadline cannot be extended. Opening your invitation in the same brow
 Questions or private security reports: [Telegram DM](https://t.me/mailsec).
 
 [Messenger release verification / Проверка обновления](docs/secure-chat-messenger-release.md) · [Initial production deployment](docs/deployment-verification.md).
+
+[Session return and presence verification / Возврат и статусы](docs/secure-chat-presence-release.md).

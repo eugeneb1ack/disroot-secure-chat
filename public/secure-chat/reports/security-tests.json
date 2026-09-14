@@ -1,29 +1,31 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T15:40:44.927Z",
+  "generatedAt": "2026-09-14T17:15:25.652Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
   "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "24586a0ff88c660b8597589f47446194c7a8403a",
+  "gitHead": "f340edd0b429414fd186e8660ae3261b62cf18b1",
   "sourceSha256": {
-    "lib/secure-chat-protocol.ts": "b6f493683ac64fe082bebae4f723bfe51b0317f271453df57c2cdfdd295adca0",
-    "lib/secure-chat-invite.ts": "d446fe4d2c98b924313f5bce3f98975a7b05abb35306239851f2bc66244d7c3c",
-    "lib/secure-chat-mls.ts": "7cf816e094051e08f5f7e62a66b2375b0cdfd43702bc740ac02152dbbd6c2ba3",
+    "lib/secure-chat-protocol.ts": "5ca5ee1162c36e8da10ce167ca962d0bb4339a66c4fff14bbf8254bd480941e9",
+    "lib/secure-chat-invite.ts": "446c4c064e3fa00871eb255d92fedad0b257e1820d1bbd38eb2787fde67a6b46",
+    "lib/secure-chat-mls.ts": "c110849ee10651229d1138315c92b691522a9956eafc9001f0b86365e0d7e923",
     "lib/secure-chat-mls-adapter.ts": "32545ce180774d80daf5aaf112ed554dbdc9a0b99b3736abd4e9d94c0572c46b",
-    "lib/secure-chat-client.ts": "63bd9378e809bab9bda07767f25f34c4fd9941e5dd8754271f61debced34aaef",
-    "lib/secure-chat-store.ts": "8b39e94fef8df0ec944c0e69b49bb145351a3fde0491a258ebf3cc1fc2bc8b9c",
+    "lib/secure-chat-client.ts": "0ed2127bc4149239797251239ba4d9bb1d7b0eb89ee60f77f0214aeffdaa3bd0",
+    "lib/secure-chat-store.ts": "8a3a13816ed4c6af6d6f6240493f0acc65dd0da2089eac2a9e393f1c42221918",
     "lib/secure-chat-handler.ts": "ba989b31d21e67d0d20a80031c5cc30fe7b7a56625d43c027f7a2ef9414d5b6d",
     "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
     "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
     "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
-    "lib/secure-chat-v2.test.mjs": "e1206ca8be6b3f9729884e6b2f514727cd9abc327be9a9ea1e011897f5e06643",
+    "lib/secure-chat-v2.test.mjs": "264b403b925932fadac76c8a26b70b8112c082ea5ee601bc4d55b3d906d1cf52",
     "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
-    "package-lock.json": "dff6b582344010d2207e57c8d67781ff16fadc6d6e519a460cac48e6a9d332dd",
+    "package-lock.json": "fda4f1d4c21d65f86b19fa4031f947619e385b24b9a5d6f55c82ce1ee7e552f7",
     "lib/secure-chat-interactions.ts": "dedb9a21a8b81af84ed96def3100d1c44156de87ca048bc53026dcabaf48d213",
-    "lib/secure-chat-session.ts": "6165379ced5da342882bce2531b248e3e4fff01cd12be0ee4ae5ca1a65fdf466"
+    "lib/secure-chat-session.ts": "200db0d870bcdd82ad3d6248c435c85172903a8e0de89dead933449b929a2ba8",
+    "lib/secure-chat-runtime.ts": "4c843f8aa2965821119b909230ed7ab2a5b20299edd42d1a8b6e596457466ce0",
+    "lib/secure-chat-polling.ts": "543a3a3e6886bbf553aae7848987d75e839c4edd5943cf08ba66cc4c3b2082f6"
   },
   "passed": true,
-  "total": 77,
+  "total": 91,
   "results": [
     {
       "suite": "Production integration and hostile inputs",
@@ -301,6 +303,62 @@
         },
         {
           "name": "owner shutdown invalidates mirrored views and cannot be resumed from stale state",
+          "passed": true
+        },
+        {
+          "name": "presence follows authenticated reads, times out, reconnects and disappears on logout",
+          "passed": true
+        },
+        {
+          "name": "presence reveals no nicknames or signing fingerprints to the relay",
+          "passed": true
+        },
+        {
+          "name": "participant connection bindings cannot be copied from another signing identity",
+          "passed": true
+        },
+        {
+          "name": "a validly signed duplicate transport binding is rejected before the write lease",
+          "passed": true
+        },
+        {
+          "name": "connection bindings are one-time and client views do not expose mutable profiles",
+          "passed": true
+        },
+        {
+          "name": "old relays without presence do not fabricate participant status",
+          "passed": true
+        },
+        {
+          "name": "malformed or oversized presence snapshots fail closed before rendering",
+          "passed": true
+        },
+        {
+          "name": "orphaned invitations reject new guests instead of leaving everyone waiting",
+          "passed": true
+        },
+        {
+          "name": "a guest waiting when the last admitted participant leaves receives an explicit error",
+          "passed": true
+        },
+        {
+          "name": "silent abandoned sessions do not create a misleading new waiting guest",
+          "passed": true
+        },
+        {
+          "name": "the background session poller admits a guest while its document is hidden",
+          "passed": true
+        },
+        {
+          "name": "poll wakeups do not overlap and teardown removes event listeners",
+          "passed": true
+        },
+        {
+          "name": "SPA view detach and return retain identity, history and admission without a new login",
+          "passed": true
+        },
+        {
+          "name": "invitations preserve the chat document path for same-tab hash navigation",
           "passed": true
         }
       ],

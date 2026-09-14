@@ -1,5 +1,5 @@
 import { b64, capability, digest, MlsConversation, randomId, seal, unseal, utf8, type PreparedPacket } from "./secure-chat-mls.ts";
-import { loginText, type ChatInvitation, type ChatView, type LoginChallenge, type LoginRequest, type ReadableMessage, type RelaySnapshot, type TransportPublicKey, type MessageInteraction, type MessageReference, type Reaction } from "./secure-chat-protocol.ts";
+import { MAX_MEMBERS, PRESENCE_TTL, idPattern, loginText, type ChatInvitation, type ChatView, type LoginChallenge, type LoginRequest, type ReadableMessage, type RelaySnapshot, type RelayPresence, type TransportPublicKey, type MessageInteraction, type MessageReference, type Reaction } from "./secure-chat-protocol.ts";
 import { applyMessageEvent, findMessage, reactionFallback, validInteraction, validMessageText, validReference } from "./secure-chat-interactions.ts";
 
 export class ChatApiError extends Error {
@@ -38,6 +38,9 @@ export class SecureChatClient {
   #transport: ChatTransport;
   #lastRefresh = 0;
   #pendingId = "";
+  #presence?: RelayPresence[];
+  #presenceAt = 0;
+  #polling?: Promise<void>;
   private constructor(crypto: MlsConversation, transport: ChatTransport) { this.#crypto = crypto; this.#transport = transport; }
   static async connect(nickname: string, name: string, invite: ChatInvitation | null, origin: string, transport: ChatTransport = httpTransport) {
     const mls = await MlsConversation.generate(nickname, invite ?? undefined), client = new SecureChatClient(mls, transport);
@@ -52,6 +55,7 @@ export class SecureChatClient {
       const authenticated = await transport<{ token: string; id: string; expires: number; manifest: string }>({ action: "authenticate", id: challenge.id, signature });
       if (!/^[0-9a-f]{64}$/.test(authenticated.token) || !/^[0-9a-f]{32}$/.test(authenticated.id) || authenticated.expires !== mls.invitation.expires) throw new Error("Invalid relay session.");
       client.#token = authenticated.token; client.#manifest = authenticated.manifest;
+      await mls.bindConnection(authenticated.id);
       await mls.readManifest(authenticated.manifest);
       if (invite) { const id = randomId(); client.#pendingId = id; await client.#api({ action: "enqueue", id, sealed: await mls.requestJoin(id) }); }
       else { await mls.create(); client.#lastRefresh = Date.now(); }
@@ -61,8 +65,10 @@ export class SecureChatClient {
   get invitation() { return { ...this.#crypto.invitation }; }
   get closed() { return this.#closed; }
   get view(): ChatView {
+    const fresh = Date.now() - this.#presenceAt < PRESENCE_TTL;
     return { ready: this.#crypto.ready, name: this.#crypto.name, expires: this.#crypto.invitation.expires,
-      members: this.#crypto.profiles, messages: structuredClone(this.#messages), identity: { ...this.#crypto.identity }, epoch: this.#crypto.epoch, verification: this.#crypto.verification };
+      members: this.#crypto.profiles, messages: structuredClone(this.#messages), identity: structuredClone(this.#crypto.identity), epoch: this.#crypto.epoch, verification: this.#crypto.verification,
+      ...(this.#presence ? { presence: { members: this.#crypto.profiles.map(member => ({ id: member.id, status: !fresh || !member.connection ? "unknown" as const : this.#presence!.some(value => value.id === member.connection!.id && value.online && value.ready) ? "online" as const : this.#presence!.some(value => value.id === member.connection!.id && value.online && !value.ready) ? "connecting" as const : "offline" as const })), joining: fresh ? this.#presence.filter(value => value.online && !value.ready).length : 0, available: fresh ? this.#presence.filter(value => value.online && value.ready).length : 0 } } : {}) };
   }
   #api<T>(action?: Record<string, unknown>) { return this.#transport<T>(action, this.#token, this.#seq); }
   #check() { if (this.#closed || this.invitation.expires <= Date.now()) { this.close(); throw new Error("This conversation has ended. Its keys have been discarded."); } }
@@ -82,6 +88,10 @@ export class SecureChatClient {
     const snapshot = await this.#api<RelaySnapshot>();
     this.#check();
     if (snapshot.expires !== this.invitation.expires || snapshot.manifest !== this.#manifest || !Number.isSafeInteger(snapshot.seq) || snapshot.seq < this.#seq || !Array.isArray(snapshot.events) || snapshot.events.length > 32 || !Array.isArray(snapshot.pending) || snapshot.pending.length > 8) throw new Error("Relay state failed validation.");
+    if (snapshot.presence !== undefined) {
+      if (!Array.isArray(snapshot.presence) || snapshot.presence.length > MAX_MEMBERS || snapshot.presence.some(value => !value || !idPattern.test(value.id) || typeof value.online !== "boolean" || typeof value.ready !== "boolean") || new Set(snapshot.presence.map(value => value.id)).size !== snapshot.presence.length) throw new Error("Invalid participant connection state.");
+      this.#presence = structuredClone(snapshot.presence); this.#presenceAt = Date.now();
+    }
     if (!this.#crypto.ready && snapshot.rejected) {
       const reason = await unseal<{ rejected: boolean }>(this.invitation, `rejection:${this.#pendingId}`, snapshot.rejected);
       if (reason.rejected) throw new Error("This nickname or admission request was rejected. Choose another nickname and open the invitation again.");
@@ -136,7 +146,10 @@ export class SecureChatClient {
     this.close();
     throw new Error(`The write could not be confirmed. Your keys were discarded to prevent unsafe reuse. ${last instanceof ChatApiError ? last.message : "Open the invitation again."}`);
   }
-  poll() { return this.#serial(async () => {
+  poll() {
+    // Multiple views share one poll, including while the owning tab is hidden.
+    if (this.#polling) return this.#polling;
+    const work = this.#serial(async () => {
     const snapshot = await this.#pull();
     if (!this.#crypto.ready) return;
     const pending = snapshot.pending[0];
@@ -162,7 +175,10 @@ export class SecureChatClient {
       try { await this.#publish(randomId(), lease.id, await this.#crypto.prepareRefresh()); }
       catch (error) { this.close(); throw error; }
     }
-  }); }
+    });
+    this.#polling = work.finally(() => { this.#polling = undefined; });
+    return this.#polling;
+  }
   async send(body: string, replyTo?: MessageReference) {
     // Ordinary draft errors must not destroy a healthy cryptographic session.
     if (!validMessageText(body)) throw new ChatApiError("Invalid message text.", 409);
@@ -192,6 +208,7 @@ export class SecureChatClient {
   close() {
     if (this.#closed) return;
     this.#closed = true;
+    this.#presence = undefined; this.#presenceAt = 0;
     const token = this.#token; this.#token = ""; this.#pendingId = ""; this.#manifest = ""; this.#messages = [];
     this.#crypto.close();
     if (token) void this.#transport({ action: "logout" }, token).catch(() => {});

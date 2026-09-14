@@ -14,7 +14,7 @@
       [
         "03",
         "Joining without an account",
-        "A separate browser-generated P-256 transport key signs a single-use, 60-second challenge bound to the origin, conversation, expiry, public transport key, capability hash and creation manifest. The relay consumes it before verification, then issues a 256-bit bearer token. A guest submits an encrypted, signed one-time MLS KeyPackage. An online participant automatically admits it through an MLS Add commit and an HPKE-protected Welcome. New guests receive future messages, without earlier history. All participants have the same capabilities. The full KeyPackage signature and MLS proposal are validated before taking a write lease. Invalid requests are rejected without closing existing participants; abandoned reservations expire after two minutes."
+        "A separate browser-generated P-256 transport key signs a single-use, 60-second challenge bound to the origin, conversation, expiry, public transport key, capability hash and creation manifest. The relay consumes it before verification, then issues a 256-bit bearer token. A guest submits an encrypted, signed one-time MLS KeyPackage. An online participant automatically admits it through an MLS Add commit and an HPKE-protected Welcome. New guests receive future messages, without earlier history. All participants have the same capabilities. The full KeyPackage signature and MLS proposal are validated before taking a write lease. Invalid requests are rejected without closing existing participants; abandoned reservations expire after two minutes. If no surviving admitted session exists, the relay rejects new admission explicitly; when all remaining sessions have stopped polling, sign-in asks the guest to wait for an original tab to reconnect."
       ],
       [
         "04",
@@ -54,7 +54,12 @@
       [
         "11",
         "Returning to a live session",
-        "Opening the same invitation in another tab of the same browser profile and origin can reuse the open session through BroadcastChannel. Its channel name is derived from the complete invitation. Only the original tab holds private keys and the relay token; other tabs exchange commands and readable UI state locally. All sends use the original client’s serialized MLS queue. Hiding the landing-page chat keeps it alive; End session ends all attached views. Closing an attached view leaves the original intact. Closing or reloading the original tab destroys its keys; this is not persistent recovery. Same-origin website code and the browser remain trusted, and another person using the same browser profile can access its live session. A suspended original tab may delay reconnection."
+        "Opening the same invitation in another tab of the same browser profile and origin reuses an open session through BroadcastChannel. Its channel name is derived from the complete invitation. Only the original document holds private keys and the relay token; other tabs exchange commands and readable UI state locally. The session lives outside the React screen: Back to site and reopening chat through the site keep the same identity, keys and local history. A session-owned poll loop continues admission in background tabs and catches up on focus, visibility and network wakeups; overlapping client polls are coalesced. End session ends all attached views. Closing an attached view leaves the original intact. Closing or reloading the original document destroys its keys; there is no persistent recovery. Same-origin code and the browser remain trusted. A suspended tab may delay admission or reconnection."
+      ],
+      [
+        "12",
+        "Participant presence",
+        "The relay records only the latest successful authenticated poll time for each temporary transport session in RAM. An online flag expires after 20 seconds without a poll; logout removes the session immediately when delivered. No IP address, nickname or permanent last-seen history is added. The encrypted profile contains a connection-v1 signature binding its MLS signing fingerprint to its transport session ID, scoped to this conversation and deadline. Clients reject invalid signatures and duplicate bindings before admission. The UI maps relay connection flags to verified profiles, shows pending admission separately and retains disconnected members in the MLS roster. Relay-reported presence is advisory: a malicious relay can lie about status, and a sleeping browser can delay updates. It does not revoke keys or prove a human is present."
       ]
     ],
     "limits": [
@@ -99,7 +104,7 @@
       [
         "03",
         "Вход без аккаунта",
-        "Отдельный транспортный ключ P-256, созданный в браузере, подписывает одноразовый запрос со сроком 60 секунд. В нём закреплены origin, беседа, срок, публичный транспортный ключ, хеш допуска и данные создания. Сервер удаляет запрос до проверки и выдаёт случайный токен длиной 256 бит. Гость передаёт зашифрованный подписанный MLS KeyPackage. Участник с открытой вкладкой автоматически добавляет его через MLS Add и защищённый HPKE пакет Welcome. Гость получает будущие сообщения без прежней истории. Возможности у всех одинаковые. Подпись всего KeyPackage и MLS-предложение проверяются до захвата права записи. Повреждённый запрос отклоняется без отключения участников; незавершённый вход освобождает место через две минуты."
+        "Отдельный транспортный ключ P-256, созданный в браузере, подписывает одноразовый запрос со сроком 60 секунд. В нём закреплены origin, беседа, срок, публичный транспортный ключ, хеш допуска и данные создания. Сервер удаляет запрос до проверки и выдаёт случайный токен длиной 256 бит. Гость передаёт зашифрованный подписанный MLS KeyPackage. Участник с открытой вкладкой автоматически добавляет его через MLS Add и защищённый HPKE пакет Welcome. Гость получает будущие сообщения без прежней истории. Возможности у всех одинаковые. Подпись всего KeyPackage и MLS-предложение проверяются до захвата права записи. Повреждённый запрос отклоняется без отключения участников; незавершённый вход освобождает место через две минуты. Если не осталось допущенной сессии, relay явно отклоняет новый вход. Если оставшиеся сессии перестали опрашивать сервер, гость получает просьбу дождаться возвращения исходной вкладки."
       ],
       [
         "04",
@@ -139,7 +144,12 @@
       [
         "11",
         "Возврат в открытую сессию",
-        "Та же ссылка в другой вкладке того же профиля браузера и origin может подключить уже открытую сессию через BroadcastChannel. Имя канала вычисляется из полного приглашения. Приватные ключи и токен relay остаются только в исходной вкладке; другие вкладки локально обмениваются с ней командами и состоянием интерфейса с открытым текстом. Все отправки проходят через одну очередь MLS исходного клиента. Сворачивание чата на главной сохраняет сессию; «Завершить сессию» закрывает все подключённые представления. Закрытие дополнительной вкладки не завершает исходную. Закрытие или перезагрузка исходной вкладки уничтожает её ключи: постоянного восстановления нет. Код того же origin и браузер остаются точками доверия; другой человек с тем же профилем браузера может открыть его живую сессию. Приостановленная исходная вкладка может задержать подключение."
+        "Повторное открытие приглашения в другой вкладке того же профиля браузера и origin использует открытую сессию через BroadcastChannel. Имя канала выведено из полного приглашения. Приватные ключи и токен relay остаются только в исходном документе; другие вкладки локально передают команды и прочитанное состояние интерфейса. Сессия живёт вне React-экрана: кнопка «На сайт» и повторное открытие чата внутри сайта сохраняют прежний ключ, никнейм и прочитанную историю. Опрос принадлежит сессии, продолжает подключать гостей в фоновой вкладке и возобновляется при фокусе, видимости и восстановлении сети; одновременные опросы объединяются. «Завершить сессию» закрывает все её представления. Закрытие присоединённой вкладки не закрывает исходную. Закрытие или перезагрузка исходного документа уничтожает ключи — постоянного восстановления нет. Код origin и браузер остаются точками доверия. Приостановка вкладки может задержать вход и восстановление связи."
+      ],
+      [
+        "12",
+        "Кто на связи",
+        "Relay хранит в RAM только время последнего успешного авторизованного опроса каждой временной транспортной сессии. Без опроса статус онлайн истекает через 20 секунд; доставленный logout удаляет сессию сразу. IP-адреса, никнеймы и постоянная история посещений не добавляются. Зашифрованный профиль содержит подпись connection-v1, связывающую MLS fingerprint с идентификатором транспортной сессии, конкретной беседой и её сроком. Неверные подписи и повторные привязки отклоняются до допуска. Интерфейс сопоставляет статусы relay с проверенными профилями, отдельно показывает ожидающих входа и сохраняет отключившихся в MLS-списке. Статус носит справочный характер: злонамеренный relay может соврать, а спящий браузер — задержать обновление. Это не отзыв ключа и не доказательство присутствия человека."
       ]
     ],
     "limits": [

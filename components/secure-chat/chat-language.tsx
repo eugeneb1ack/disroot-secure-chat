@@ -30,6 +30,10 @@ export function ChatLanguageSwitch() {
 }
 
 const errors: Record<string, string> = {
+  "No participant is online. Ask your friend to open the original chat tab, then retry.": "Сейчас никто не онлайн. Попросите друга открыть исходную вкладку чата и повторите вход.",
+  "No participant can open this conversation anymore. Create a new conversation and share its new link.": "В этой беседе больше не осталось активных ключей для подключения. Создайте новую беседу и отправьте новую ссылку.",
+  "Invalid participant connection state.": "Не удалось проверить данные подключения участников.",
+  "Invalid transport identity binding.": "Не удалось проверить привязку соединения к ключу участника.",
   "Another conversation is open in this tab. End it before opening a different invitation.": "В этой вкладке уже открыта другая беседа. Завершите её перед входом по другому приглашению.",
   "Could not connect.": "Не удалось подключиться.",
   "Connection failed.": "Не удалось подключиться.",

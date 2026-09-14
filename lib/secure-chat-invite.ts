@@ -9,7 +9,7 @@ export function parseInvitation(hash: string, now = Date.now()): ChatInvitation 
   if (!idPattern.test(room) || !hexPattern.test(secret) || !hexPattern.test(founder) || !Number.isSafeInteger(expires) || expires <= now || expires > now + CHAT_TTL) return null;
   return { room, secret, founder, expires };
 }
-export function invitationLink(origin: string, invitation: ChatInvitation) {
+export function invitationLink(origin: string, invitation: ChatInvitation, path: "/" | "/secure-chat" = "/secure-chat") {
   const values = new URLSearchParams({ v: "2", room: invitation.room, key: invitation.secret, founder: invitation.founder, until: String(invitation.expires) });
-  return `${origin}/secure-chat#secure-chat?${values}`;
+  return `${origin}${path}#secure-chat?${values}`;
 }

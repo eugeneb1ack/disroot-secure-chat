@@ -1,7 +1,7 @@
 "use client";
 import { animate } from "animejs";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { nicknamePattern, prettyFingerprint, type ChatView, type MessageReference, type Reaction } from "@/lib/secure-chat-protocol";
+import { nicknamePattern, type ChatView, type MessageReference, type Reaction } from "@/lib/secure-chat-protocol";
 import type { ChatSession } from "@/lib/secure-chat-session";
 import { ChatGuide } from "./chat-guide";
 import { chatError, useChatLanguage } from "./chat-language";
@@ -10,8 +10,9 @@ import { invitationLink, type ChatInvitation } from "@/lib/secure-chat-invite";
 import { ChatMessage } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
 import { findMessage } from "@/lib/secure-chat-interactions";
+import { ChatParticipants } from "./chat-participants";
 
-function IdentityGate({ onConnect, invited }: { onConnect: (nickname: string, name: string) => Promise<void>; invited: boolean }) {
+function IdentityGate({ onConnect, invited, onStartNew }: { onConnect: (nickname: string, name: string) => Promise<void>; invited: boolean; onStartNew: () => void }) {
   const { language, t } = useChatLanguage();
   const [nickname, setNickname] = useState("");
   const [chatName, setChatName] = useState("");
@@ -35,6 +36,7 @@ function IdentityGate({ onConnect, invited }: { onConnect: (nickname: string, na
       {!invited && <label>{t("Chat name", "Название беседы")} <span className="chat-muted">{t("(optional)", "(необязательно)")}</span><input name="chatName" autoComplete="off" maxLength={40} value={chatName} disabled={busy} onChange={event => setChatName(event.target.value)} placeholder={t("Private conversation", "Приватная беседа")} /></label>}
       {error && <p className="chat-error" role="alert">{chatError(error, language)}</p>}
       <button className="chat-button chat-primary" type="submit" disabled={busy}>{busy ? t("CREATING YOUR ENCRYPTED CONVERSATION…", "СОЗДАЁМ ЗАШИФРОВАННУЮ БЕСЕДУ…") : t("GENERATE KEYS & ENTER →", "СОЗДАТЬ КЛЮЧИ И ВОЙТИ →")}</button>
+      {invited && <button className="chat-button" type="button" disabled={busy} onClick={onStartNew}>{t("Start a new conversation", "Создать новую беседу")}</button>}
       <p className="chat-form-note">{t("Up to 24 hours, with one shared deadline. Closing or reloading this tab discards your keys sooner. An existing participant must be online to connect a new guest.", "До 24 часов с единым сроком для всех. Закрытие или перезагрузка вкладки удаляет её ключи раньше. Для входа нового гостя нужен участник онлайн.")}</p>
       <details className="chat-private-help"><summary>{t("What identifies a participant?", "Как отличить участника?")}</summary><p>{t("Every message is signed by a temporary key. Its fingerprint appears beside the nickname. Names are unique in the verified conversation roster, but they are not accounts or proof of a real identity. A fresh session has a different fingerprint.", "Каждое сообщение подписано временным ключом. Рядом с никнеймом указан его fingerprint. Никнеймы в проверенном списке участников не повторяются, но не подтверждают личность человека. В новой сессии будет другой fingerprint.")}</p></details>
       <details className="chat-private-help"><summary>{t("What reaches the server?", "Что получает сервер?")}</summary><p>{t("Encrypted messages and encrypted participant profiles, temporary connection identifiers and routing metadata. Your invitation secret, message keys and readable messages stay with the participants. The HTTPS server can still see your network address during a connection; it does not need to log it. A compromised website or device remains a point of trust.", "Зашифрованные сообщения и профили, временные идентификаторы соединений и данные для доставки. Секрет приглашения, ключи сообщений и открытый текст остаются у участников. При HTTPS сервер видит сетевой адрес подключения, даже без его записи в логи. Взломанный сайт или устройство могут нарушить защиту.")}</p></details>
@@ -48,7 +50,7 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
-  const [resuming, setResuming] = useState(!!invitation);
+  const [resuming, setResuming] = useState(true);
   const [mirrored, setMirrored] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -73,8 +75,8 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
   }, []);
   const lock = useCallback(() => { clientRef.current?.close(); release(); }, [release]);
   useEffect(() => {
-    if (!invitation) return;
     if (clientRef.current) {
+      if (!invitation) return;
       const active = clientRef.current.invitation;
       const same = active.room === invitation.room && active.secret === invitation.secret && active.founder === invitation.founder && active.expires === invitation.expires;
       const timer = setTimeout(() => {
@@ -88,10 +90,12 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
       setResuming(true);
       try {
         const { resumeChatSession } = await import("@/lib/secure-chat-session");
-        const session = await resumeChatSession(invitation);
+        const { currentChatSession, retainChatSession } = await import("@/lib/secure-chat-runtime");
+        const resumed = currentChatSession(invitation) ?? (invitation ? await resumeChatSession(invitation) : null);
+        const session = resumed ? retainChatSession(resumed) : null;
         if (cancelled) { session?.detach(); return; }
         if (session) {
-          clientRef.current = session; setMirrored(true); setView(session.view); setInviteLink(invitationLink(location.origin, session.invitation));
+          clientRef.current = session; setMirrored(session.mirrored); setView(session.view); setInviteLink(invitationLink(location.origin, session.invitation, location.pathname === "/" ? "/" : "/secure-chat"));
           setConnected(true); setError(""); onInvitationConsumed();
         }
       } catch (error) {
@@ -105,8 +109,12 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
     const lifecycle = generation;
     const poll = async () => {
       const client = clientRef.current;
-      if (client && !document.hidden) {
-        try { await client.poll(); if (alive && clientRef.current === client) { setView(client.view); setConnected(true); } }
+      if (client) {
+        try {
+          if (client.closed) throw new Error(client.pollingError ?? "This conversation has ended. Its keys have been discarded.");
+          if (client.pollingError) throw new Error(client.pollingError);
+          if (alive && clientRef.current === client) { setView(client.view); setConnected(true); setError(""); }
+        }
         catch (error) {
           if (alive && clientRef.current === client) {
             setConnected(false);
@@ -118,9 +126,7 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
       if (alive) timer = window.setTimeout(poll, 2000);
     };
     const timerStart = window.setTimeout(poll, 100);
-    const pagehide = () => release();
-    window.addEventListener("pagehide", pagehide);
-    return () => { alive = false; clearTimeout(timer); clearTimeout(timerStart); window.removeEventListener("pagehide", pagehide); lifecycle.current++; clientRef.current?.detach(); clientRef.current = null; };
+    return () => { alive = false; clearTimeout(timer); clearTimeout(timerStart); lifecycle.current++; clientRef.current?.detach(); clientRef.current = null; };
   }, [lock, release]);
   useEffect(() => {
     if (!viewExpires) return;
@@ -134,10 +140,11 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
     const current = ++generation.current;
     const { SecureChatClient } = await import("@/lib/secure-chat-client");
     const { ownChatSession, resumeChatSession } = await import("@/lib/secure-chat-session");
-    const client = invitation && await resumeChatSession(invitation) || ownChatSession(await SecureChatClient.connect(nickname, name, invitation, location.origin));
+    const { currentChatSession, retainChatSession } = await import("@/lib/secure-chat-runtime");
+    const client = retainChatSession(currentChatSession(invitation) ?? (invitation && await resumeChatSession(invitation) || ownChatSession(await SecureChatClient.connect(nickname, name, invitation, location.origin))));
     if (generation.current !== current) { client.detach(); return; }
     clientRef.current = client; setMirrored(client.mirrored);
-    setView(client.view); setInviteLink(invitationLink(location.origin, client.invitation));
+    setView(client.view); setInviteLink(invitationLink(location.origin, client.invitation, location.pathname === "/" ? "/" : "/secure-chat"));
     setConnected(true); setError(""); onInvitationConsumed();
   };
   const send = async (event: FormEvent) => {
@@ -179,12 +186,12 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
   return <div className={`chat-workspace chat-single-conversation${!view ? " is-starting" : ""}${showGuide ? " has-guide" : ""}`}>
     <section className="chat-conversation" aria-label={roomName} lang={language}>
       <header className="chat-room-header"><div><h3><span aria-hidden="true">#</span> {roomName}</h3><p>{view ? `${count} ${participantLabel} · ${connected ? t("encrypted connection", "зашифрованное соединение") : t("reconnecting…", "восстанавливаем связь…")}` : t("No account. Private. Anonymous.", "Без аккаунта. Приватно. Анонимно.")}</p></div><div className="chat-room-tools"><button className="chat-button chat-guide-toggle" type="button" aria-expanded={showGuide} aria-controls="chat-guide-panel" onClick={() => setShowGuide(current => !current)}>{t("How it works", "Как это работает")} <span aria-hidden="true">{showGuide ? "−" : "+"}</span></button></div></header>
-      {!view ? <div className="chat-gate-scroll">{invitation && <div className="chat-invitation-banner"><strong>{t("Private invitation.", "Приватное приглашение.")}</strong><p>{t("Create a key to join this room.", "Создайте ключ, чтобы войти в беседу.")}</p></div>}{error && <p className="chat-error" role="alert">{chatError(error, language)}</p>}{resuming ? <p className="chat-loading" role="status">{t("Looking for your open session…", "Ищем вашу открытую сессию…")}</p> : <IdentityGate onConnect={connect} invited={!!invitation} />}</div> : <>
+      {!view ? <div className="chat-gate-scroll">{invitation && <div className="chat-invitation-banner"><strong>{t("Private invitation.", "Приватное приглашение.")}</strong><p>{t("Create a key to join this room.", "Создайте ключ, чтобы войти в беседу.")}</p></div>}{error && <p className="chat-error" role="alert">{chatError(error, language)}</p>}{resuming ? <p className="chat-loading" role="status">{t("Looking for your open session…", "Ищем вашу открытую сессию…")}</p> : <IdentityGate key={invitation ? "invited" : "new"} onConnect={connect} invited={!!invitation} onStartNew={onInvitationConsumed} />}</div> : <>
         <div className="chat-room-notice chat-pinned-invite"><div><strong>{t("24 HOURS. THEN GONE.", "24 ЧАСА. ПОТОМ ВСЁ ИСЧЕЗНЕТ.")}</strong><small>{t("Ends", "До")} {new Intl.DateTimeFormat(dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(view!.expires))} · {t("no recovery", "без восстановления")}</small></div><button type="button" className="chat-button" aria-expanded={showInvite} onClick={() => setShowInvite(current => !current)}>{t("Invite friends", "Пригласить друзей")} {showInvite ? "−" : "↗"}</button></div>
         {showInvite && <div className="chat-invite-scroll"><ChatInviteLink link={inviteLink} /></div>}
-        <details className="chat-recipients"><summary>{t("Participant keys", "Ключи участников")} <span>{view.members.length} / epoch {view.epoch}</span></summary><div><p>{t("Compare full fingerprints with your friends. Matching conversation codes confirm the same MLS transcript.", "Сверьте полные fingerprint с друзьями. Совпадение кодов беседы подтверждает одинаковый MLS transcript.")}</p>{view.members.map(member => <div className="chat-recipient" key={member.id}><strong>{member.nickname}{member.id === view.identity.id ? t(" (you)", " (вы)") : ""}</strong><code>{prettyFingerprint(member.id)}</code></div>)}{view.ready && <div className="chat-recipient"><strong>{t("Conversation code", "Код беседы")}</strong><code>{prettyFingerprint(view.verification)}</code></div>}</div></details>
+        <ChatParticipants view={view} connected={connected} />
         <div className="chat-messages" ref={messagesRef} role="log" aria-label={t("Encrypted messages", "Зашифрованные сообщения")} aria-live="polite" aria-relevant="additions" onScroll={event => { const target = event.currentTarget; nearBottom.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80; }}>
-          {!messages.length && <div className="chat-empty"><span className="chat-empty-symbol" aria-hidden="true">[ … ]</span><p className="chat-eyebrow">{t("ENCRYPTED CHANNEL", "ЗАШИФРОВАННЫЙ ЧАТ")}</p><h3>{view.ready ? t("No messages yet.", "Сообщений пока нет.") : t("Connecting your keys…", "Подключаем ваши ключи…")}</h3><small>{view.ready ? t("Share the invitation. Your friends join with their own keys.", "Отправьте ссылку друзьям. Они войдут со своими ключами.") : t("Keep this tab open. An existing participant will connect you automatically.", "Оставьте вкладку открытой. Участник онлайн подключит вас автоматически.")}</small></div>}
+          {!messages.length && <div className="chat-empty"><span className="chat-empty-symbol" aria-hidden="true">[ … ]</span><p className="chat-eyebrow">{t("ENCRYPTED CHANNEL", "ЗАШИФРОВАННЫЙ ЧАТ")}</p><h3>{view.ready ? t("No messages yet.", "Сообщений пока нет.") : t("Connecting your keys…", "Подключаем ваши ключи…")}</h3><small>{view.ready ? t("Share the invitation. Your friends join with their own keys.", "Отправьте ссылку друзьям. Они войдут со своими ключами.") : view.presence?.available === 0 ? t("No connected participant yet. Ask your friend to reopen the original chat tab. A new key cannot restore a lost session.", "Пока никто не на связи. Попросите друга открыть исходную вкладку чата. Новый ключ не восстановит потерянную сессию.") : t("An online participant is connecting you. Keep this tab open.", "Участник онлайн подключает вас. Оставьте вкладку открытой.")}</small></div>}
           {messages.map((message, index) => {
             const own = message.sender === view.identity.id;
             const grouped = index > 0 && messages[index - 1].sender === message.sender && Date.parse(message.time) - Date.parse(messages[index - 1].time) < 5 * 60_000;

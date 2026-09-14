@@ -7,6 +7,7 @@ export interface ChatSession {
   readonly invitation: ChatInvitation;
   readonly closed: boolean;
   readonly mirrored: boolean;
+  readonly pollingError?: string;
   poll(): Promise<void>;
   send(body: string, replyTo?: MessageReference): Promise<void>;
   react(target: MessageReference, emoji: Reaction | null): Promise<void>;

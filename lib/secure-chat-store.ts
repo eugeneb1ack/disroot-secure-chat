@@ -1,5 +1,5 @@
 import { createHash, randomBytes, timingSafeEqual, webcrypto } from "node:crypto";
-import { CHAT_TTL, MAX_MEMBERS, hexPattern, idPattern, loginText, type LoginRequest, type RelayEvent, type RelaySnapshot } from "./secure-chat-protocol.ts";
+import { CHAT_TTL, MAX_MEMBERS, PRESENCE_TTL, hexPattern, idPattern, loginText, type LoginRequest, type RelayEvent, type RelaySnapshot } from "./secure-chat-protocol.ts";
 import { ChatError } from "./secure-chat-guard.ts";
 export { ChatError } from "./secure-chat-guard.ts";
 const random = () => randomBytes(32).toString("hex");
@@ -9,7 +9,7 @@ function blob(value: unknown, max = 64_000): asserts value is string {
   if (typeof value !== "string" || value.length < 16 || value.length > max || !/^[A-Za-z0-9_-]+$/.test(value)) throw new ChatError("Invalid encrypted packet.");
 }
 function identifier(value: unknown): asserts value is string { if (typeof value !== "string" || !idPattern.test(value)) throw new ChatError("Invalid identifier."); }
-type Session = { id: string; room: string; ready: boolean; expires: number; admissionExpires?: number; rejected?: string; sent: number[]; reads: number[]; joined?: string; welcome?: { sealed: string; seq: number } };
+type Session = { id: string; room: string; ready: boolean; expires: number; lastSeen: number; admissionExpires?: number; rejected?: string; sent: number[]; reads: number[]; joined?: string; welcome?: { sealed: string; seq: number } };
 type Room = { expires: number; capHash: string; manifest: string; seq: number; events: RelayEvent[]; bytes: number; members: Set<string>; pending: Map<string, { sealed: string; session: string; expires: number }>; lease?: { id: string; holder: string; expires: number; seq: number } };
 type Challenge = { text: string; request: Omit<LoginRequest, "capability">; capHash: string; key: string; expires: number; origin: string };
 
@@ -47,6 +47,10 @@ export class SecureChatStore {
     if (times.length >= max) throw new ChatError("Too many requests. Retry shortly.", 429);
     times.push(this.now());
   }
+  private canAdmit(room: Room) {
+    // An unacknowledged Welcome can still establish a surviving participant.
+    return [...room.members].some(key => this.sessions.get(key)?.ready);
+  }
   challenge(input: LoginRequest, origin: string) {
     this.clean(); this.throttle(this.attempts, 120, 60_000);
     if (this.challenges.size >= 64 || this.sessions.size >= 256 || this.keyBindings.size >= 512) throw new ChatError("The relay is at capacity.", 429);
@@ -63,6 +67,8 @@ export class SecureChatStore {
     } else {
       const room = this.rooms.get(input.room);
       if (!room || room.expires !== input.expires || !equal(room.capHash, capHash)) throw new ChatError("Invitation is unavailable or expired.", 403);
+      if (!this.canAdmit(room)) throw new ChatError("No participant can open this conversation anymore. Create a new conversation and share its new link.", 410);
+      if (![...room.members].some(key => { const member = this.sessions.get(key); return member?.ready && member.lastSeen > this.now() - PRESENCE_TTL; })) throw new ChatError("No participant is online. Ask your friend to open the original chat tab, then retry.", 409);
       if (room.members.size >= MAX_MEMBERS || room.pending.size >= 8) throw new ChatError("Conversation is at capacity.", 429);
     }
     const request = { room: input.room, expires: input.expires, create: input.create, publicKey: { ...pub }, ...(input.create ? { manifest: input.manifest } : {}) };
@@ -94,9 +100,10 @@ export class SecureChatStore {
         room = { expires: request.expires, capHash, manifest: request.manifest!, seq: 0, events: [], bytes: 0, members: new Set(), pending: new Map() };
         this.rooms.set(request.room, room);
       } else if (!room || room.expires !== request.expires || !equal(room.capHash, capHash)) throw new ChatError("Conversation expired.", 403);
+      if (!request.create && !this.canAdmit(room)) throw new ChatError("No participant can open this conversation anymore. Create a new conversation and share its new link.", 410);
       if (room.members.size >= MAX_MEMBERS) throw new ChatError("Conversation is at capacity.", 429);
       const token = random(), tokenHash = hash(token), sessionId = randomBytes(16).toString("hex");
-      this.sessions.set(tokenHash, { id: sessionId, room: request.room, ready: request.create, expires: request.expires, ...(!request.create ? { admissionExpires: Math.min(this.now() + 120_000, request.expires) } : {}), sent: [], reads: [] });
+      this.sessions.set(tokenHash, { id: sessionId, room: request.room, ready: request.create, expires: request.expires, lastSeen: this.now(), ...(!request.create ? { admissionExpires: Math.min(this.now() + 120_000, request.expires) } : {}), sent: [], reads: [] });
       room.members.add(tokenHash); this.keyBindings.set(challenge.key, { room: request.room, expires: request.expires });
       return { token, id: sessionId, expires: request.expires, manifest: room.manifest };
     } finally { this.verifying--; }
@@ -112,7 +119,10 @@ export class SecureChatStore {
     this.throttle(session.reads, 60);
     if (!Number.isSafeInteger(after) || after < 0 || after > room.seq) throw new ChatError("Invalid conversation cursor.", 409);
     if (session.ready && !session.welcome && after < (room.events[0]?.seq ?? 1) - 1) throw new ChatError("This tab missed too much state. Rejoin with a fresh key.", 410);
+    if (!session.ready && !this.canAdmit(room)) throw new ChatError("No participant can open this conversation anymore. Create a new conversation and share its new link.", 410);
+    session.lastSeen = this.now();
     return { expires: room.expires, manifest: room.manifest, seq: room.seq, ready: session.ready,
+      presence: [...room.members].flatMap(key => { const member = this.sessions.get(key); return member ? [{ id: member.id, online: member.lastSeen > this.now() - PRESENCE_TTL, ready: member.ready && !member.welcome }] : []; }),
       events: session.ready ? room.events.filter(event => event.seq > after).slice(0, 32) : [],
       pending: session.ready ? [...room.pending].map(([id, value]) => ({ id, sealed: value.sealed })) : [],
       ...(session.welcome ? { welcome: session.welcome } : {}), ...(session.rejected ? { rejected: session.rejected } : {}) };

@@ -23,12 +23,17 @@ async function request(path, action, token, requestOrigin = origin) {
 }
 // Optional endpoint override reaches a loopback release candidate with its real
 // Host/Origin. No secrets or invitation URLs are printed by this smoke test.
-const transport = async (action, token, after = 0) => {
+const logouts = [];
+const transport = (action, token, after = 0) => {
+  const operation = (async () => {
   const response = await request(`/api/secure-chat?after=${after}`, action, token);
   assert.match(response.headers.get("cache-control"), /no-store/);
   const data = await response.json();
   if (!response.ok) throw new ChatApiError(data.error, response.status);
   return data;
+  })();
+  if (action?.action === "logout") logouts.push(operation);
+  return operation;
 };
 const clients = [], results = [];
 try {
@@ -52,5 +57,17 @@ try {
   results.push("Replies do not disclose pre-join message content to a new guest");
   const denied = await request("/api/secure-chat", { action: "challenge" }, undefined, "https://invalid.example");
   assert.equal(denied.status, 403); results.push("Cross-origin rejection and no-store API responses");
+  if (process.env.CHAT_TEST_REQUIRE_PRESENCE === "1") {
+    await a.poll(); await b.poll();
+    assert.equal(a.view.presence.members.filter(member => member.status === "online").length, 3);
+    const departed = c.view.identity.id, invite = a.invitation;
+    c.close(); await Promise.all(logouts); await a.poll();
+    assert.equal(a.view.presence.members.find(member => member.id === departed).status, "offline");
+    assert.equal(a.view.members.length, 3);
+    results.push("Authenticated online status and logout without removing verified identities");
+    a.close(); b.close(); await Promise.all(logouts);
+    await assert.rejects(() => SecureChatClient.connect("ReturnCheck", "", invite, origin, transport), /No participant can open/);
+    results.push("Orphaned invitation explicitly rejected after the last participant leaves");
+  }
   console.log(JSON.stringify({ passed: true, checkedAt: new Date().toISOString(), origin, checks: results }, null, 2));
 } finally { clients.forEach(client => client.close()); }
