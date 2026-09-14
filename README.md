@@ -75,3 +75,5 @@ Open Chat resumes the saved conversation. New chat explicitly ends that session.
 [Send recovery: production checks](docs/secure-chat-send-deployment.md).
 
 [Interface and multiple-tab regression checks](public/secure-chat/reports/native-interface.md).
+
+[Release verification: mobile interface and capacity fix](docs/secure-chat-native-deployment.md).

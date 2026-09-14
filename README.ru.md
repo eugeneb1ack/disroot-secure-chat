@@ -53,3 +53,5 @@ Open Chat возвращает в сохранённую беседу. «Нов�
 [Проверка отправки и возврата после выкладки](docs/secure-chat-send-deployment.md).
 
 [Проверка интерфейса и нескольких вкладок](public/secure-chat/reports/native-interface.md).
+
+[Проверка выпуска: мобильный интерфейс и лимит бесед](docs/secure-chat-native-deployment.md).

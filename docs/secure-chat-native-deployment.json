@@ -1,0 +1,35 @@
+{
+  "release": "3573c43",
+  "checkedAt": "2026-09-14T21:19:56.906Z",
+  "candidatePassed": true,
+  "publicHttps": {
+    "passed": true,
+    "checkedAt": "2026-09-14T21:19:56.906Z",
+    "origin": "https://disroot.website",
+    "checks": [
+      "HTTP challenge, authentication, encrypted admission, creator retained",
+      "Bidirectional MLS text and emoji",
+      "Authenticated encrypted reply, reaction and reaction removal",
+      "Non-founder admission, third client, no pre-join history",
+      "Replies do not disclose pre-join message content to a new guest",
+      "Three simultaneous HTTP writers deliver exactly once without manual retries",
+      "Cross-origin rejection and no-store API responses",
+      "Authenticated online status and logout without removing verified identities",
+      "Orphaned invitation explicitly rejected after the last participant leaves"
+    ]
+  },
+  "staticFiles": {
+    "previous": 48,
+    "release": 57,
+    "allPreviousHashesRetained": true
+  },
+  "serviceHealth": {
+    "web": "healthy",
+    "relay": "healthy",
+    "webRestarts": 0,
+    "relayRestarts": 0,
+    "nginxValid": true,
+    "torActive": true,
+    "telegramUnchanged": true
+  }
+}
