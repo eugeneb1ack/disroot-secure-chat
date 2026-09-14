@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T18:22:43.686Z
+Generated: 2026-09-14T19:10:40.981Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**109 checks; PASSED. Technical self-review, not an independent audit.**
+**113 checks; PASSED. Technical self-review, not an independent audit.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -114,6 +114,10 @@ Exit: 0. [Raw TAP output](integration.tap).
 - PASS — saved sessions: temporary relay outage keeps the local checkpoint for another attempt
 - PASS — saved sessions: expired relay session removes the local checkpoint without recreating a room
 - PASS — HTTP transport: interrupted streams and invalid JSON remain recoverable gateway errors
+- PASS — durable outbox: lost publish ACK preserves the participant and retries once without duplicate text
+- PASS — durable outbox: offline before publication survives reload and preserves unsent ciphertext
+- PASS — legacy links: root invitations enter the standalone route without losing the secret fragment
+- PASS — durable outbox: interrupted refresh does not end the participant
 
 ## MLS retention and compromise scenarios (laboratory fixtures)
 

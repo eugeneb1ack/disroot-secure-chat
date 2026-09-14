@@ -17,7 +17,7 @@ export function currentChatSession(invite?: ChatInvitation | null) {
 export function retainChatSession(session: ChatSession): ChatSession {
   const previous = currentChatSession(session.invitation);
   if (previous) { if (previous !== session) session.detach(); return previous; }
-  const close = () => { stop?.(); stop = undefined; active = undefined; session.close(); };
+  const close = () => { stop?.(); stop = undefined; active = undefined; return session.close(); };
   const pagehide = () => { stop?.(); stop = undefined; active = undefined; session.detach(); };
   let pollingError: string | undefined;
   const poll = async () => {

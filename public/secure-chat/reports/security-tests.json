@@ -1,33 +1,33 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T18:22:43.686Z",
+  "generatedAt": "2026-09-14T19:10:40.981Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
   "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "38f253225cefe47b0e300d454003c8adf3fca350",
+  "gitHead": "7dbb1a9f2cd88e0286e10298150169b0737b600e",
   "sourceSha256": {
-    "lib/secure-chat-protocol.ts": "5ca5ee1162c36e8da10ce167ca962d0bb4339a66c4fff14bbf8254bd480941e9",
-    "lib/secure-chat-invite.ts": "446c4c064e3fa00871eb255d92fedad0b257e1820d1bbd38eb2787fde67a6b46",
+    "lib/secure-chat-protocol.ts": "ea0ad4ab25670df049c420e853914f36e661fb0bd415eeb1aaa02ccf5b893ed9",
+    "lib/secure-chat-invite.ts": "f487dff425901c461ac96dc59a867f3a281145dad55b6173f6532b79806b75fe",
     "lib/secure-chat-mls.ts": "d155de3e0abf32fa94062d35fe2f9f7012e6fa113387252a75143d64268c08f3",
     "lib/secure-chat-mls-adapter.ts": "32545ce180774d80daf5aaf112ed554dbdc9a0b99b3736abd4e9d94c0572c46b",
-    "lib/secure-chat-client.ts": "385747faa59acbd918ccc0ea33c3897385a75525123933cb3b97b7a58ddc63ff",
+    "lib/secure-chat-client.ts": "9d1384a1fd927a2ee324429397a67b22234969ced4ed58648ccae012014e887e",
     "lib/secure-chat-store.ts": "8a3a13816ed4c6af6d6f6240493f0acc65dd0da2089eac2a9e393f1c42221918",
     "lib/secure-chat-handler.ts": "ba989b31d21e67d0d20a80031c5cc30fe7b7a56625d43c027f7a2ef9414d5b6d",
     "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
     "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
     "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
-    "lib/secure-chat-v2.test.mjs": "3ec304f54e2f214c843c04fdc8366fd7fda6fff2d441cd4cdfc7619b9749b10f",
+    "lib/secure-chat-v2.test.mjs": "9fbd50887155f0ae51850c7f320d83c6f6d3c914a067b37e7935bf92eda5e47f",
     "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
     "package-lock.json": "fda4f1d4c21d65f86b19fa4031f947619e385b24b9a5d6f55c82ce1ee7e552f7",
     "lib/secure-chat-interactions.ts": "dedb9a21a8b81af84ed96def3100d1c44156de87ca048bc53026dcabaf48d213",
-    "lib/secure-chat-session.ts": "55ff9764a38cfb5121e8f3ffe9b38801c9966a6c4cdcb16eed3194cbecff0a75",
-    "lib/secure-chat-runtime.ts": "da0f0a30655234abbc456eec46810bceaef6b224e2bca6cec05e757f21892025",
+    "lib/secure-chat-session.ts": "6008f0f8e9777f573f4861fdb2bed935bc3ad8150f8ba22ad0ec20a4ee579ed9",
+    "lib/secure-chat-runtime.ts": "af99e847ee6c3cb1e345c35ab96efb55a7c935f9e70296fff450f76eaa129e24",
     "lib/secure-chat-polling.ts": "543a3a3e6886bbf553aae7848987d75e839c4edd5943cf08ba66cc4c3b2082f6",
     "lib/secure-chat-vault.ts": "7d89ebd6e9d79b03d65066cbdd15b78fd154eb49455c6c55d212187c05ee2d18",
-    "lib/secure-chat-browser-session.ts": "05ab305c3be5c65dcb9f1542e2a583d2a84640b530bdd40fa2fa56cc2027674f"
+    "lib/secure-chat-browser-session.ts": "7c9acd3902aaf2b9538ae1b2157893c35c4acbd343f18f72d58e1c9a9d54cdc6"
   },
   "passed": true,
-  "total": 109,
+  "total": 113,
   "results": [
     {
       "suite": "Production integration and hostile inputs",
@@ -433,6 +433,22 @@
         },
         {
           "name": "HTTP transport: interrupted streams and invalid JSON remain recoverable gateway errors",
+          "passed": true
+        },
+        {
+          "name": "durable outbox: lost publish ACK preserves the participant and retries once without duplicate text",
+          "passed": true
+        },
+        {
+          "name": "durable outbox: offline before publication survives reload and preserves unsent ciphertext",
+          "passed": true
+        },
+        {
+          "name": "legacy links: root invitations enter the standalone route without losing the secret fragment",
+          "passed": true
+        },
+        {
+          "name": "durable outbox: interrupted refresh does not end the participant",
           "passed": true
         }
       ],

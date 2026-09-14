@@ -14,7 +14,7 @@ export const httpTransport: ChatTransport = async <T>(action?: Record<string, un
   const response = await fetch(`/api/secure-chat${action ? "" : `?after=${after}`}`, {
     method: action ? "POST" : "GET", credentials: "omit", cache: "no-store", redirect: "error",
     headers: { ...(action ? { "Content-Type": "application/json" } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-    body: action ? JSON.stringify(action) : undefined, signal: AbortSignal.timeout(15_000),
+    body: action ? JSON.stringify(action) : undefined, signal: AbortSignal.timeout(8_000),
   }).catch(() => { throw new ChatApiError("The relay is temporarily unreachable.", 503); });
   // Bound the untrusted relay response before parsing or invoking the MLS decoder.
   const reader = response.body?.getReader();
@@ -94,7 +94,9 @@ export class SecureChatClient {
       return client;
     } catch (error) {
       // A temporary outage must not turn a reload into irreversible logout.
-      if (error instanceof ChatApiError && [409, 429, 502, 503].includes(error.status)) { client.suspend(); }
+      // Keep the verified local identity and outbox visible while offline.
+      // The normal polling loop resumes delivery; never show a new-user form.
+      if (error instanceof ChatApiError && [409, 429, 502, 503].includes(error.status)) return client;
       else await client.close();
       throw error;
     }
@@ -104,6 +106,7 @@ export class SecureChatClient {
     const fresh = Date.now() - this.#presenceAt < PRESENCE_TTL;
     return { ready: this.#crypto.ready, name: this.#crypto.name, expires: this.#crypto.invitation.expires,
       members: this.#crypto.profiles, messages: structuredClone(this.#messages), identity: structuredClone(this.#crypto.identity), epoch: this.#crypto.epoch, verification: this.#crypto.verification,
+      deliveryPending: !!this.#publication, ...(this.#publication?.message && this.#publication.message.interaction?.kind !== "reaction" ? { pendingMessage: { id: this.#publication.id, body: this.#publication.message.body } } : {}),
       ...(this.#presence ? { presence: { members: this.#crypto.profiles.map(member => ({ id: member.id, status: !fresh || !member.connection ? "unknown" as const : this.#presence!.some(value => value.id === member.connection!.id && value.online && value.ready) ? "online" as const : this.#presence!.some(value => value.id === member.connection!.id && value.online && !value.ready) ? "connecting" as const : "offline" as const })), joining: fresh ? this.#presence.filter(value => value.online && !value.ready).length : 0, available: fresh ? this.#presence.filter(value => value.online && value.ready).length : 0 } } : {}) };
   }
   #api<T>(action?: Record<string, unknown>) { return this.#transport<T>(action, this.#token, this.#seq); }
@@ -111,7 +114,7 @@ export class SecureChatClient {
   #serial<T>(work: () => Promise<T>) {
     const result = this.#queue.then(async () => {
       this.#check();
-      try { const result = await work(); await this.#save(); return result; }
+      try { if (this.#publication) await this.#recoverPublication(); const result = await work(); await this.#save(); return result; }
       catch (error) {
         // Network congestion can recover. Authentication/state-integrity failures cannot.
         if (!(error instanceof ChatApiError) || ![409, 429, 502, 503].includes(error.status)) this.close();
@@ -185,13 +188,18 @@ export class SecureChatClient {
     // Persist the exact ciphertext AND its candidate state before any wire leaves.
     await this.#save();
     try { return await this.#flushPublication(); }
-    catch (error) { throw new Error(`The write could not be confirmed. Your keys were discarded to prevent unsafe reuse. ${error instanceof ChatApiError ? error.message : "Open the invitation again."}`); }
+    catch (error) {
+      // A durable candidate is an outbox, not a reason to destroy the identity.
+      // The next poll must reconcile exactly this packet before any new operation.
+      if (this.#persistence && (error instanceof TypeError || error instanceof ChatApiError && [409, 429, 502, 503].includes(error.status))) throw new ChatApiError("Delivery is awaiting confirmation. The saved message will retry automatically.", 503);
+      throw new Error(`The write could not be confirmed. Your keys were discarded to prevent unsafe reuse. ${error instanceof ChatApiError ? error.message : "Open the invitation again."}`);
+    }
   }
   async #flushPublication() {
     const { id, lease, packet, join, message } = this.#publication!;
     const command = { action: "publish", id, lease, wire: packet.wire, ...(packet.bootstrap ? { bootstrap: packet.bootstrap } : {}), ...(join ? { join, welcome: packet.welcome } : {}) };
     let last: unknown;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < (this.#persistence ? 1 : 3); attempt++) {
       this.#check();
       try {
         const response = await this.#api<{ seq: number }>(command);
@@ -256,25 +264,25 @@ export class SecureChatClient {
         await this.#api({ action: "release", lease: lease.id });
         return;
       }
-      try { await this.#publish(randomId(), lease.id, packet, pending.id); }
-      catch (error) { this.close(); throw error; }
+      await this.#publish(randomId(), lease.id, packet, pending.id);
     } else if (Date.now() - this.#lastRefresh > 5 * 60_000) {
       const lease = await this.#claim(false);
       if (!lease) return;
-      try { await this.#publish(randomId(), lease.id, await this.#crypto.prepareRefresh()); }
-      catch (error) { this.close(); throw error; }
+      await this.#publish(randomId(), lease.id, await this.#crypto.prepareRefresh());
     }
     });
     this.#polling = work.finally(() => { this.#polling = undefined; });
     return this.#polling;
   }
   async send(body: string, replyTo?: MessageReference) {
+    if (this.#publication) throw new ChatApiError("Delivery is awaiting confirmation. The saved message will retry automatically.", 409);
     // Ordinary draft errors must not destroy a healthy cryptographic session.
     if (!validMessageText(body)) throw new ChatApiError("Invalid message text.", 409);
     if (replyTo !== undefined && !validReference(replyTo)) throw new ChatApiError("Invalid message interaction.", 409);
     return this.#send(body, replyTo ? { kind: "reply", target: { ...replyTo } } : undefined);
   }
   async react(target: MessageReference, emoji: Reaction | null) {
+    if (this.#publication) throw new ChatApiError("Delivery is awaiting confirmation. The saved message will retry automatically.", 409);
     const interaction = { kind: "reaction" as const, target, emoji };
     if (!validInteraction(interaction)) throw new ChatApiError("Invalid message interaction.", 409);
     return this.#send(reactionFallback(emoji), structuredClone(interaction));
@@ -289,10 +297,8 @@ export class SecureChatClient {
       await this.#api({ action: "release", lease: lease.id });
       throw new ChatApiError("The original message is no longer available in this tab.", 409);
     }
-    try {
-      const packet = await this.#crypto.prepareText(id, body, interaction);
-      await this.#publish(id, lease.id, packet, undefined, { body, interaction, time: new Date().toISOString() });
-    } catch (error) { this.close(); throw error; }
+    const packet = await this.#crypto.prepareText(id, body, interaction);
+    await this.#publish(id, lease.id, packet, undefined, { body, interaction, time: new Date().toISOString() });
   }); }
   close() {
     if (this.#closed) return this.#erasing;

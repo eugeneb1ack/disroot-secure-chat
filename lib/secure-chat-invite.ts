@@ -13,3 +13,8 @@ export function invitationLink(origin: string, invitation: ChatInvitation, path:
   const values = new URLSearchParams({ v: "2", room: invitation.room, key: invitation.secret, founder: invitation.founder, until: String(invitation.expires) });
   return `${origin}${path}#secure-chat?${values}`;
 }
+
+// Legacy invitations must enter the no-store route, keeping their secret fragment.
+export function legacyChatLocation(hash: string) {
+  return hash.startsWith("#secure-chat?") && hash.length <= 330 ? `/secure-chat${hash}` : null;
+}

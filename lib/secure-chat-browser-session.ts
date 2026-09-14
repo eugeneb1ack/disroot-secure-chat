@@ -15,8 +15,8 @@ export async function holdChatWriter(invite: ChatInvitation): Promise<() => void
 
 // Every owner holds one origin-wide exclusive lock. Never steal a lock or load a
 // second MLS writer when an existing owner is sleeping or temporarily unreachable.
-export async function browserChatSession(invitation: ChatInvitation | null, credentials?: { nickname: string; name: string }) {
-  const invite = invitation ?? await savedInvitation();
+export async function browserChatSession(invitation: ChatInvitation | null, credentials?: { nickname: string; name: string }, startFresh = false) {
+  const invite = invitation ?? (startFresh ? null : await savedInvitation());
   if (invite) {
     const mirrored = await resumeChatSession(invite);
     if (mirrored) return mirrored;

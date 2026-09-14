@@ -21,7 +21,7 @@ export type Reaction = typeof REACTIONS[number];
 export type MessageReference = { id: string; sender: string };
 export type MessageInteraction = { kind: "reply"; target: MessageReference } | { kind: "reaction"; target: MessageReference; emoji: Reaction | null };
 export type ReadableMessage = { id: string; sender: string; nickname: string; body: string; time: string; replyTo?: MessageReference; reactions: { sender: string; emoji: Reaction }[] };
-export type ChatView = { ready: boolean; name: string; expires: number; members: Profile[]; messages: ReadableMessage[]; identity: Profile; epoch: string; verification: string; presence?: { members: { id: string; status: "online" | "offline" | "unknown" | "connecting" }[]; joining: number; available: number } };
+export type ChatView = { deliveryPending?: boolean; pendingMessage?: { id: string; body: string }; ready: boolean; name: string; expires: number; members: Profile[]; messages: ReadableMessage[]; identity: Profile; epoch: string; verification: string; presence?: { members: { id: string; status: "online" | "offline" | "unknown" | "connecting" }[]; joining: number; available: number } };
 export function canonical(...fields: unknown[]) { return JSON.stringify([PROTOCOL, ...fields]); }
 export function loginText(id: string, origin: string, expires: number, request: LoginRequest, capabilityHash: string) {
   return canonical("login", id, origin, expires, request.room, request.expires, request.create, request.publicKey.x, request.publicKey.y, capabilityHash, request.manifest ?? "");

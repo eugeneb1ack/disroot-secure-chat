@@ -51,6 +51,7 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
   const [resuming, setResuming] = useState(true);
+  const [startFresh, setStartFresh] = useState(false);
   const [mirrored, setMirrored] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -74,7 +75,13 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
     setView(null); setDraft(""); setReplyTo(undefined); setInviteLink(""); setShowInvite(false); setConnected(false); setMirrored(false);
   }, []);
   const lock = useCallback(() => { clientRef.current?.close(); release(); }, [release]);
+  const newConversation = async () => {
+    setBusy(true);
+    await clientRef.current?.close();
+    release(); setStartFresh(true); setResuming(false); setBusy(false); onInvitationConsumed();
+  };
   useEffect(() => {
+    if (startFresh && !invitation) return;
     if (clientRef.current) {
       if (!invitation) return;
       const active = clientRef.current.invitation;
@@ -95,7 +102,7 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
         const session = resumed ? retainChatSession(resumed) : null;
         if (cancelled) { session?.detach(); return; }
         if (session) {
-          clientRef.current = session; setMirrored(session.mirrored); setView(session.view); setInviteLink(invitationLink(location.origin, session.invitation, location.pathname === "/" ? "/" : "/secure-chat"));
+          clientRef.current = session; setMirrored(session.mirrored); setView(session.view); setInviteLink(invitationLink(location.origin, session.invitation));
           setConnected(true); setError(""); onInvitationConsumed();
         }
       } catch (error) {
@@ -103,7 +110,7 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
       } finally { if (!cancelled) setResuming(false); }
     }, 0);
     return () => { cancelled = true; clearTimeout(timer); };
-  }, [invitation, onInvitationConsumed]);
+  }, [invitation, onInvitationConsumed, startFresh]);
   useEffect(() => {
     let alive = true, timer = 0;
     const lifecycle = generation;
@@ -140,20 +147,21 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
     const current = ++generation.current;
     const { browserChatSession } = await import("@/lib/secure-chat-browser-session");
     const { currentChatSession, retainChatSession } = await import("@/lib/secure-chat-runtime");
-    const session = currentChatSession(invitation) ?? await browserChatSession(invitation, { nickname, name });
+    const session = currentChatSession(invitation) ?? await browserChatSession(invitation, { nickname, name }, startFresh);
     if (!session) throw new Error("Could not open this conversation.");
     const client = retainChatSession(session);
     if (generation.current !== current) { client.detach(); return; }
     clientRef.current = client; setMirrored(client.mirrored);
-    setView(client.view); setInviteLink(invitationLink(location.origin, client.invitation, location.pathname === "/" ? "/" : "/secure-chat"));
-    setConnected(true); setError(""); onInvitationConsumed();
+    setView(client.view); setInviteLink(invitationLink(location.origin, client.invitation));
+    setConnected(true); setError(""); setStartFresh(false); onInvitationConsumed();
   };
   const send = async (event: FormEvent) => {
     event.preventDefault(); const client = clientRef.current;
-    if (!client || !draft.trim() || busy) return;
+    if (!client || !draft.trim() || busy || client.view.deliveryPending) return;
+    const body = draft;
     setBusy(true); setError("");
-    try { await client.send(draft, replyTo); if (clientRef.current === client) { setDraft(""); setReplyTo(undefined); setView(client.view); setConnected(true); nearBottom.current = true; } }
-    catch (error) { if (clientRef.current === client) { if (client.closed) lock(); setError(error instanceof Error ? error.message : "Could not send."); } }
+    try { await client.send(body, replyTo); if (clientRef.current === client) { setDraft(current => current === body ? "" : current); setReplyTo(undefined); setView(client.view); setConnected(true); nearBottom.current = true; } }
+    catch (error) { if (clientRef.current === client) { if (client.closed) lock(); else if (client.view.deliveryPending) { setView(client.view); setDraft(current => current === body ? "" : current); setReplyTo(undefined); } setError(error instanceof Error ? error.message : "Could not send."); } }
     finally { setBusy(false); }
   };
   const lastMessage = messages.at(-1)?.id;
@@ -192,16 +200,17 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
         {showInvite && <div className="chat-invite-scroll"><ChatInviteLink link={inviteLink} /></div>}
         <ChatParticipants view={view} connected={connected} />
         <div className="chat-messages" ref={messagesRef} role="log" aria-label={t("Encrypted messages", "Зашифрованные сообщения")} aria-live="polite" aria-relevant="additions" onScroll={event => { const target = event.currentTarget; nearBottom.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80; }}>
-          {!messages.length && <div className="chat-empty"><span className="chat-empty-symbol" aria-hidden="true">[ … ]</span><p className="chat-eyebrow">{t("ENCRYPTED CHANNEL", "ЗАШИФРОВАННЫЙ ЧАТ")}</p><h3>{view.ready ? t("No messages yet.", "Сообщений пока нет.") : t("Connecting your keys…", "Подключаем ваши ключи…")}</h3><small>{view.ready ? t("Share the invitation. Your friends join with their own keys.", "Отправьте ссылку друзьям. Они войдут со своими ключами.") : view.presence?.available === 0 ? t("No connected participant yet. Ask your friend to reopen this link in their usual browser.", "Пока никто не на связи. Попросите друга открыть эту ссылку в привычном браузере.") : t("An online participant is connecting you. Keep this tab open.", "Участник онлайн подключает вас. Оставьте вкладку открытой.")}</small></div>}
+          {!messages.length && !view.pendingMessage && <div className="chat-empty"><span className="chat-empty-symbol" aria-hidden="true">[ … ]</span><p className="chat-eyebrow">{t("ENCRYPTED CHANNEL", "ЗАШИФРОВАННЫЙ ЧАТ")}</p><h3>{view.ready ? t("No messages yet.", "Сообщений пока нет.") : t("Connecting your keys…", "Подключаем ваши ключи…")}</h3><small>{view.ready ? t("Share the invitation. Your friends join with their own keys.", "Отправьте ссылку друзьям. Они войдут со своими ключами.") : view.presence?.available === 0 ? t("No connected participant yet. Ask your friend to reopen this link in their usual browser.", "Пока никто не на связи. Попросите друга открыть эту ссылку в привычном браузере.") : t("An online participant is connecting you. Keep this tab open.", "Участник онлайн подключает вас. Оставьте вкладку открытой.")}</small></div>}
           {messages.map((message, index) => {
             const own = message.sender === view.identity.id;
             const grouped = index > 0 && messages[index - 1].sender === message.sender && Date.parse(message.time) - Date.parse(messages[index - 1].time) < 5 * 60_000;
             const target = { id: message.id, sender: message.sender };
             return <ChatMessage key={message.id} message={message} original={message.replyTo ? findMessage(messages, message.replyTo) : undefined} own={own} grouped={grouped} identity={view.identity.id} busy={busy || !connected} onReply={() => setReplyTo(target)} onReact={emoji => void react(target, emoji)} />;
           })}
+          {view.pendingMessage && <div className="chat-pending-message" role="status"><strong>{view.identity.nickname}</strong><p>{view.pendingMessage.body}</p><small>{t("Saved here · waiting for delivery confirmation", "Сохранено здесь · ждём подтверждения доставки")}</small></div>}
         </div>
         {mirrored && <p className="chat-session-mirror" role="status">{t("Connected through your original tab. Keep it open.", "Подключено через исходную вкладку. Оставьте её открытой.")}</p>}
-        <ChatComposer draft={draft} setDraft={setDraft} reply={replyTo ? findMessage(messages, replyTo) : undefined} onCancelReply={() => setReplyTo(undefined)} onSend={send} onEnd={lock} identity={view.identity} ready={view.ready} connected={connected} busy={busy} error={error} />
+        <ChatComposer draft={draft} setDraft={setDraft} reply={replyTo ? findMessage(messages, replyTo) : undefined} onCancelReply={() => setReplyTo(undefined)} onSend={send} onEnd={() => void newConversation()} identity={view.identity} ready={view.ready} connected={connected} busy={busy || !!view.deliveryPending} error={error} />
       </>}
     </section>
     {showGuide && <aside id="chat-guide-panel" className="chat-guide-panel"><ChatGuide /></aside>}

@@ -30,6 +30,7 @@ export function ChatLanguageSwitch() {
 }
 
 const errors: Record<string, string> = {
+  "Delivery is awaiting confirmation. The saved message will retry automatically.": "Ждём подтверждения доставки. Сообщение сохранено; повторим отправку автоматически.",
   "The relay response was interrupted or invalid.": "Ответ сервера прерван или повреждён. Соединение будет восстановлено.",
   "Browser session storage is unavailable. Allow site storage to keep this conversation after a reload.": "Хранилище браузера недоступно. Разрешите хранение данных сайта, чтобы возвращаться после перезагрузки.",
   "This browser cannot safely restore chat sessions. Use a browser with Web Locks and site storage enabled.": "Для безопасного восстановления нужны Web Locks и доступное хранилище сайта. Откройте чат в поддерживающем их браузере.",

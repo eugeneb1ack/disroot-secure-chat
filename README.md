@@ -19,7 +19,7 @@ keys + plaintext  ── MLS ──►  ciphertext + routing  ── MLS ──�
 - Browser-only message keys, signed encrypted profiles and a founder-anchored admission chain.
 - A 256-bit invitation secret in the URL fragment. HKDF separates bootstrap encryption from transport authorization; the secret itself is not sent to the relay.
 - Message generations and periodic member key updates. An adapter explicitly removes old epoch state and preserves the authenticated MLS sender.
-- Serialized writes, identical-ciphertext retries, and session destruction on an unresolved encrypted write.
+- Serialized writes and a durable encrypted outbox: temporary transport errors retry the identical ciphertext without discarding the participant. Integrity failures still stop the session.
 - One shared deadline, at most 16 members. Bounded RAM-only relay storage; no chat database or disk archive.
 - Separate non-root relay container: read-only filesystem, no published port, no site secrets, no ordinary Internet egress, bounded memory/CPU/processes.
 - Responsive EN/RU messenger with a growing composer, emoji picker, encrypted replies/reactions and reduced-motion support.
@@ -69,3 +69,5 @@ Questions or private security reports: [Telegram DM](https://t.me/mailsec).
 [Session return and presence verification / Возврат и статусы](docs/secure-chat-presence-release.md).
 
 [Session recovery deployment / Проверка восстановления на production](docs/secure-chat-reload-deployment.md).
+
+Open Chat resumes the saved conversation. New chat explicitly ends that session. Legacy root invitations redirect to /secure-chat; the secret remains in the fragment.

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
-const htmlCacheControl = "private, max-age=300, stale-while-revalidate=3600";
+const htmlCacheControl = "private, max-age=0, must-revalidate";
 
 function createNonce() {
   return Buffer.from(crypto.randomUUID()).toString("base64");

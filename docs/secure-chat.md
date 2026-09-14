@@ -22,7 +22,7 @@ The pinned implementation is ts-mls 1.6.4, using RFC 9420 suite MLS_128_DHKEMX25
 
 ## Key updates and state discipline
 
-Joining changes the MLS epoch. Each active client also refreshes its own leaf approximately every five minutes; a newly admitted client refreshes on its next poll. Old epochs and consumed message generations are not retained. There is no automatic cryptographic rollback. Clients serialize their operations, acquire a short relay write lease before encrypting, and retry only the identical ciphertext. If publication remains uncertain, the tab discards its keys and asks the user to rejoin. A small pinned-version adapter explicitly strips historical epoch state and preserves the authenticated sender; it does not rely on the library’s zero-retention default, which was found insufficient during review.
+Joining changes the MLS epoch. Each active client also refreshes its own leaf approximately every five minutes; a newly admitted client refreshes on its next poll. Old epochs and consumed message generations are not retained. There is no automatic cryptographic rollback. Clients serialize their operations, acquire a short relay write lease before encrypting, and retry only the identical ciphertext. A durable pending packet survives temporary transport errors and retries automatically before another write; state-integrity failures still stop the session. A small pinned-version adapter explicitly strips historical epoch state and preserves the authenticated sender; it does not rely on the library’s zero-retention default, which was found insufficient during review.
 
 ## One deadline
 
@@ -46,7 +46,7 @@ Replies carry only the original message ID and author fingerprint. The quote is 
 
 ## Returning to a live session
 
-The browser keeps an AES-256-GCM encrypted checkpoint in IndexedDB until the shared deadline. It includes the temporary identity, current MLS state, relay token and up to 256 locally received messages. The non-extractable wrapping CryptoKey is stored by the same browser; neither it nor the checkpoint is uploaded. Reloading or reopening the same invitation in the same profile and origin restores that participant without signing in again. Web Locks permit only one active MLS writer; other tabs use BroadcastChannel. Closing the page suspends the session without logout. End session deletes the local record and revokes its transport token. A private browser window, cleared site data, storage eviction or switching origin/device can remove or hide the saved session. The relay must still exist, and its bounded event window must cover the missed updates.
+The browser keeps an AES-256-GCM encrypted checkpoint in IndexedDB until the shared deadline. It includes the temporary identity, current MLS state, relay token and up to 256 locally received messages. The non-extractable wrapping CryptoKey is stored by the same browser; neither it nor the checkpoint is uploaded. Reloading or reopening the same invitation in the same profile and origin restores that participant without signing in again. Web Locks permit only one active MLS writer; other tabs use BroadcastChannel. Closing the page suspends the session without logout. New chat ends the current session, deletes the local record and revokes its transport token. A private browser window, cleared site data, storage eviction or switching origin/device can remove or hide the saved session. The relay must still exist, and its bounded event window must cover the missed updates.
 
 ## Conditions and limits
 

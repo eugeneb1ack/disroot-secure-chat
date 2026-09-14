@@ -11,7 +11,7 @@ export interface ChatSession {
   poll(): Promise<void>;
   send(body: string, replyTo?: MessageReference): Promise<void>;
   react(target: MessageReference, emoji: Reaction | null): Promise<void>;
-  close(): void;
+  close(): void | Promise<void>;
   detach(): void;
 }
 // Same-origin UI bridge. The locked owner is the only active MLS writer.
@@ -29,7 +29,7 @@ export function ownChatSession(client: SecureChatClient, releaseWriter?: () => v
     if (stopped) return;
     stopped = true; channel?.postMessage({ ended: true }); channel?.close();
     // Another writer may claim the session only after its local record is gone.
-    void client.close().finally(() => releaseWriter?.());
+    return client.close().finally(() => releaseWriter?.());
   };
   if (channel) channel.onmessage = async ({ data }: MessageEvent<unknown>) => {
     if (!validRpc(data) || stopped) return;
