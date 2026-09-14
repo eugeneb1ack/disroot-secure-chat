@@ -1,12 +1,16 @@
 # Interface and multiple-tab regression checks
 
-Verification date: 2026-09-14. This is an implementation report, not an independent security audit.
+Verification date: 2026-09-14 UTC. This is an implementation report, not an independent security audit.
 
 ## Reproduced delivery failure
 
 Multiple tabs sharing one identity used to trigger extra relay polls through the owning tab. Their combined reads could exhaust that session's read quota and surface HTTP 429 while sending. The new integration test failed against the previous implementation with `Too many requests. Retry shortly.`
 
 Only the session owner now polls the relay. Mirror tabs read the owner's verified view over the existing same-origin BroadcastChannel. The regression test opens two mirrors, requests 35 polls from each, checks that they cause no extra relay reads, then verifies an incoming message reaches both mirrors and an outgoing message from a mirror reaches its peer. Relay limits and cryptographic validation are unchanged.
+
+## Context-menu regression
+
+A separate UI fixture using the actual message component reproduced a menu that appeared and immediately disappeared when right-clicking near the lower edge. Instrumented events showed the opening pointerup triggered native automatic popover dismissal. Message menus now remain in the native top layer but close on the next outside pointerdown or Escape; panels and menus coordinate to keep only one surface open. Repeating the same lower-edge right-click left the menu open through subsequent parent updates. The fixture and diagnostic logging were local only and are not shipped.
 
 ## Executed checks
 
@@ -28,13 +32,17 @@ No user conversations, invitation secrets or private keys are included in this r
 
 # Проверка интерфейса и нескольких вкладок
 
-Дата проверки: 14 сентября 2026 года. Это отчёт о реализации, не независимый аудит безопасности.
+Дата проверки: 14 сентября 2026 года, UTC. Это отчёт о реализации, не независимый аудит безопасности.
 
 ## Воспроизведённый сбой отправки
 
 Дополнительные вкладки одного участника вызывали новые опросы relay через основную вкладку. Вместе они могли исчерпать лимит чтения сессии и получить HTTP 429, мешающий отправке. Новый регрессионный тест на прежней реализации завершился ошибкой `Too many requests. Retry shortly.`
 
 Теперь relay опрашивает только вкладка, владеющая сессией. Остальные получают её проверенное состояние через существующий BroadcastChannel того же origin. Тест открывает две дополнительные вкладки, выполняет по 35 запросов, проверяет отсутствие лишних обращений к relay, затем доставку входящего сообщения в обе вкладки и исходящего сообщения из дополнительной вкладки собеседнику. Серверные лимиты и криптографические проверки сохранены.
+
+## Исправление мигающего меню
+
+В отдельной UI-проверке с настоящим компонентом сообщения воспроизведено исчезновение меню при правом клике у нижней границы. Диагностика событий показала, что отпускание кнопки после открытия запускало автоматическое закрытие popover. Теперь меню остаётся в верхнем слое браузера и закрывается следующим нажатием снаружи или Escape. Панели согласованно оставляют открытой только одну поверхность. Повтор того же правого клика сохранил меню открытым и при последующих обновлениях родительского компонента. Проверочный экран и диагностические логи в выпуск не входят.
 
 ## Что проверено
 

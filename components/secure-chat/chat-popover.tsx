@@ -4,7 +4,8 @@ import { animate } from "animejs";
 import { type ReactNode, type RefObject, useLayoutEffect, useRef } from "react";
 import { useChatLanguage } from "./chat-language";
 
-// The browser owns light dismissal, Escape and the single-open top layer.
+// Panels use native light dismissal. A context menu opens during pointerdown
+// on some platforms, so its opening pointerup must not dismiss it again.
 // Keep this UI lifecycle separate from the conversation/session lifecycle.
 export function ChatPopover({ id, label, anchor, placement = "panel", onClose, children, className = "" }: {
   id: string; label: string; anchor: RefObject<HTMLElement | null>;
@@ -13,10 +14,26 @@ export function ChatPopover({ id, label, anchor, placement = "panel", onClose, c
 }) {
   const { language, t } = useChatLanguage();
   const ref = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  useLayoutEffect(() => { closeRef.current = onClose; }, [onClose]);
   useLayoutEffect(() => {
     const panel = ref.current;
     if (!panel) return;
     const trigger = anchor.current;
+    const dismiss = () => closeRef.current();
+    const outside = (event: PointerEvent) => {
+      if (event.target instanceof Node && !panel.contains(event.target) && !trigger?.contains(event.target)) dismiss();
+    };
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); dismiss(); trigger?.focus({ preventScroll: true }); }
+    };
+    // Manual message menus and automatic panels still share one open surface.
+    document.dispatchEvent(new Event("chat-popover-opening"));
+    document.addEventListener("chat-popover-opening", dismiss);
+    if (placement === "message") {
+      document.addEventListener("pointerdown", outside, true);
+      document.addEventListener("keydown", escape);
+    }
     panel.showPopover({ source: trigger ?? undefined });
     const position = () => {
       const rect = trigger?.getBoundingClientRect();
@@ -41,12 +58,15 @@ export function ChatPopover({ id, label, anchor, placement = "panel", onClose, c
       ? animate(panel, { opacity: [0, 1], translateY: [6, 0], duration: 160, ease: "out(3)" }) : undefined;
     return () => {
       observer.disconnect(); animation?.cancel();
+      document.removeEventListener("chat-popover-opening", dismiss);
+      document.removeEventListener("pointerdown", outside, true);
+      document.removeEventListener("keydown", escape);
       window.removeEventListener("resize", position); window.visualViewport?.removeEventListener("resize", position);
       if (panel.matches(":popover-open")) panel.hidePopover();
     };
   }, [anchor, placement]);
   const close = () => { onClose(); anchor.current?.focus({ preventScroll: true }); };
-  return <div ref={ref} id={id} popover="auto" role="dialog" aria-label={label} lang={language}
+  return <div ref={ref} id={id} popover={placement === "message" ? "manual" : "auto"} role="dialog" aria-label={label} lang={language}
     className={`chat-popover chat-popover-${placement} ${className}`}
     onToggle={event => { if (event.newState === "closed") onClose(); }}
     onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); } }}>
