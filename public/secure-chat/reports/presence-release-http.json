@@ -1,0 +1,54 @@
+{
+  "applicationRevision": "d76321a",
+  "independentAudit": false,
+  "automatedChecks": 95,
+  "candidate": {
+    "passed": true,
+    "checkedAt": "2026-09-14T17:41:08.148Z",
+    "origin": "https://disroot.website",
+    "checks": [
+      "HTTP challenge, authentication, encrypted admission, creator retained",
+      "Bidirectional MLS text and emoji",
+      "Authenticated encrypted reply, reaction and reaction removal",
+      "Non-founder admission, third client, no pre-join history",
+      "Replies do not disclose pre-join message content to a new guest",
+      "Three simultaneous HTTP writers deliver exactly once without manual retries",
+      "Cross-origin rejection and no-store API responses",
+      "Authenticated online status and logout without removing verified identities",
+      "Orphaned invitation explicitly rejected after the last participant leaves"
+    ]
+  },
+  "productionHttps": {
+    "passed": true,
+    "checkedAt": "2026-09-14T17:42:16.810Z",
+    "origin": "https://disroot.website",
+    "checks": [
+      "HTTP challenge, authentication, encrypted admission, creator retained",
+      "Bidirectional MLS text and emoji",
+      "Authenticated encrypted reply, reaction and reaction removal",
+      "Non-founder admission, third client, no pre-join history",
+      "Replies do not disclose pre-join message content to a new guest",
+      "Three simultaneous HTTP writers deliver exactly once without manual retries",
+      "Cross-origin rejection and no-store API responses",
+      "Authenticated online status and logout without removing verified identities",
+      "Orphaned invitation explicitly rejected after the last participant leaves"
+    ]
+  },
+  "productionOnionGateway": {
+    "passed": true,
+    "checkedAt": "2026-09-14T17:43:52.114Z",
+    "origin": "http://xr7ycwzb7hd2xmxtdvfdf5rdrmm2yq4ewiqhc6vvn4bgvb7pxdc4sgad.onion",
+    "checks": [
+      "HTTP challenge, authentication, encrypted admission, creator retained",
+      "Bidirectional MLS text and emoji",
+      "Authenticated encrypted reply, reaction and reaction removal",
+      "Non-founder admission, third client, no pre-join history",
+      "Replies do not disclose pre-join message content to a new guest",
+      "Three simultaneous HTTP writers deliver exactly once without manual retries",
+      "Cross-origin rejection and no-store API responses",
+      "Authenticated online status and logout without removing verified identities",
+      "Orphaned invitation explicitly rejected after the last participant leaves"
+    ]
+  },
+  "onionGatewayTransport": "Loopback SSH tunnel with exact onion Host/Origin; this run did not traverse Tor."
+}

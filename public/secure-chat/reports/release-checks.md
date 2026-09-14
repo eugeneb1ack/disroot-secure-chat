@@ -1,40 +1,53 @@
 # Secure Chat — browser and transport verification
 
-Date: 2026-09-14. Technical self-review, not an independent audit.
+Date: 2026-09-14. Application revision: `d76321a`. Technical self-review, not an independent audit.
 
-These checks used the release candidate on the production host before switching the main website. The candidate used read-only access to existing site data and a separate memory-only chat relay. The subsequent authentication-capacity correction is covered by [the 62 automated security checks](security-tests.md).
+The current application passed **95 automated checks**, lint and a production build. [Full test list, source hashes and raw TAP](security-tests.md). The checks below were performed separately against an isolated candidate and the deployed application; they are not included in the 95-test count.
+
+## Current release
 
 | Check | Observed result |
 |---|---|
-| Desktop messenger, 1280 × 720 | Creator stays in the conversation after a guest joins; both exchange messages. |
-| Mobile messenger, 390 × 844 | Chat fits the viewport without horizontal document overflow; composer and emoji picker work. |
-| Unicode and emoji | Russian text and multi-codepoint emoji arrive through the real browser UI. |
-| Reload | The tab returns to key generation; its previous session is not restored. |
-| Navigation | The chat uses an unlabelled square; ARCADE keeps its label. Accessible navigation names remain. |
-| Security page | English/Russian controls render the protocol, threat boundaries, reports and audit contact. |
-| Candidate HTTP through SSH | Three real clients authenticate, exchange MLS messages and admit a third guest through a non-founder. |
-| Onion through the Tor network | The same three-client MLS scenario passes through a separate Tor client and the live v3 onion service. |
-| New guest history | A new member receives subsequent messages, without pre-join readable history. |
-| Cross-origin request | Rejected with HTTP 403; API responses use no-store. |
-| Site regression suites | Arcade: 122 passed. Typing: 6 passed. |
-| Public repository CI | Node 22 on Linux: dependency installation, 61 initial security checks, lint and production build passed. The subsequent capacity regression raises the current suite to 62. |
+| Production HTTPS, three independent clients | Authentication, encrypted admission, bidirectional Unicode/emoji and admission through a non-founder passed. |
+| Simultaneous send | Three concurrent HTTP writers delivered all three messages exactly once without manual retries. |
+| Replies and reactions | Authenticated replies, reaction set/remove and unchanged attribution passed. A new guest received no pre-join message content, including quoted text. |
+| Participant status | Three online identities; logout marked the departed member offline without removing its verified identity. |
+| Orphaned invitation | After all admitted test sessions ended, a new guest received an explicit refusal instead of waiting indefinitely. |
+| Request boundaries | A foreign Origin received HTTP 403. API responses used no-store. |
+| Production browser | A Russian/emoji message was sent. Reopening the copied invitation retained the participant and message. Back to site and reopening chat retained the same full fingerprint and message. |
+| English and Russian | Messenger and security controls rendered in both languages. The messenger was visually inspected. |
+| Isolated Docker preview | Same-tab and same-origin second-tab return reused one identity. A separate-origin guest joined, exchanged messages and appeared disconnected after logout. At 390px the document had no horizontal overflow; desktop layout was visually inspected. |
+| Production onion gateway | The same nine HTTP scenarios passed with its real onion Host/Origin through a loopback SSH tunnel. This repeat check did not traverse Tor. |
+| Deployment | Web and relay healthy, zero restarts, no OOM; relay on one internal network with no published port or persistent mount. Existing environment and data mounts preserved; Telegram services not restarted; Tor active; nginx validation passed. |
+| Published pages and report | Homepage, chat, security and JSON report returned 200. The JSON matched the tested 95-check report byte-for-byte. Chat/security responses carried CSP and no-store. |
 
-Candidate HTTP completion: **2026-09-14T14:01:15.997Z**. Onion completion: **2026-09-14T14:18:44.850Z**.
+Candidate completion: **17:41:08.148 UTC**. Production HTTPS: **17:42:16.810 UTC**. Production onion gateway: **17:43:52.114 UTC**. [Machine-readable results](presence-release-http.json).
 
-[Initial public CI run](https://github.com/eugeneb1ack/disroot-secure-chat/actions/runs/34852266949). [Current CI runs](https://github.com/eugeneb1ack/disroot-secure-chat/actions). [Deployment verification and operating configuration](https://github.com/eugeneb1ack/disroot-secure-chat/blob/main/docs/deployment-verification.md).
+[Public CI for this application](https://github.com/eugeneb1ack/disroot-secure-chat/actions/runs/34874952906) · [Session return and presence release notes](https://github.com/eugeneb1ack/disroot-secure-chat/blob/main/docs/secure-chat-presence-release.md) · [Deployment configuration](https://github.com/eugeneb1ack/disroot-secure-chat/blob/main/docs/deployment-verification.md).
 
-## Scope
+## Earlier transport verification
 
-The onion check runs the actual client cryptography in Node with HTTP carried through Tor SOCKS and remote hostname resolution. It is not a Tor Browser UI test. Network latency varies; the first onion circuits required warm-up. Browser checks used the Chromium-based in-app browser. They do not certify every browser, device or accessibility tool. Expiry tests advance an injected relay clock; no 24-hour endurance run is claimed. No public attack traffic, user messages, invitation links, private keys or session tokens are included in this report.
+The initial release was tested through an independent Tor client and the live v3 onion service at **2026-09-14T14:18:44.850Z**. That test ran client cryptography in Node through Tor SOCKS with remote hostname resolution; it was not a Tor Browser UI test. Earlier site regression runs passed 122 Arcade checks and six typing checks. These are historical results, not fresh runs for the current revision.
+
+## Scope and limits
+
+Keys remain memory-only. Closing or reloading the original document destroys them. Returning through an invitation can attach to a still-live original document in the same browser profile and origin; it cannot recover destroyed keys. The approved relay update ended its previous conversations. A subsequent report-only web update keeps the relay running.
+
+Presence uses a 20-second timeout tested with an injected clock. Browser logout was directly checked; attempted browser network emulation did not produce an observable offline state and is not reported as a passed network-loss test. Browser/OS suspension may delay updates. A 390px viewport check does not establish physical-device keyboard behavior. No all-browser certification, 24-hour endurance test or independent audit is claimed. There are no user messages, invitation secrets, private keys or session tokens in these reports.
 
 ## Русский
 
-Проверен релизный кандидат на рабочем сервере до переключения основного сайта. Доступ кандидата к прежним данным сайта был только для чтения; чат использовал отдельный relay в памяти.
+Версия приложения `d76321a` опубликована 14 сентября 2026 года. Пройдено **95 автоматических проверок**, lint и production-сборка. Дополнительно на рабочем HTTPS-адресе проверены:
 
-- На десктопе 1280 × 720 и мобильном размере 390 × 844 проверены вход, сохранение создателя в чате, отправка текста и эмодзи. Горизонтального переполнения на мобильном размере нет.
-- Перезагрузка возвращает вкладку к генерации ключей. Прежняя сессия не восстанавливается.
-- В нижней навигации чат обозначен квадратом без подписи, ARCADE остаётся подписанным. Security переключается между английским и русским.
-- Через HTTP и настоящую сеть Tor проверены три клиента: вход, двусторонняя MLS-переписка, подключение третьего участника не создателем, отсутствие прежней истории у нового гостя. Чужой Origin получает 403, ответы API — no-store.
-- Пройдено 122 проверки Arcade и 6 проверок набора текста. Первоначальный публичный CI прошёл 61 проверку чата, lint и сборку; текущий набор содержит 62 проверки после отдельного исправления гонки квот.
+- Три независимых клиента: вход, MLS-переписка, текст и эмодзи, подключение третьего участника через другого собеседника.
+- Три одновременные отправки: каждое сообщение доставлено один раз, ручные повторы не потребовались.
+- Ответы, установка и снятие реакций. Новый участник не получает прежнюю переписку, в том числе через цитаты.
+- Статусы участников и выход. После завершения всех сессий ссылка выдаёт понятную ошибку входа.
+- Отклонение чужого Origin с HTTP 403 и no-store для API.
+- В браузере: отправка сообщения, возврат по своей ссылке и через «На сайт» с сохранением fingerprint и истории; интерфейсы чата и security на русском и английском.
 
-Tor проверялся клиентским криптографическим кодом через SOCKS, а не интерфейсом Tor Browser. Первым onion-соединениям потребовалось время на построение маршрутов. Браузерная проверка выполнена во встроенном Chromium. Это не независимый аудит, не проверка всех браузеров и не суточный нагрузочный прогон. В отчёте нет переписки пользователей, секретных ссылок, ключей или токенов.
+Те же девять HTTP-сценариев прошли через рабочий onion-шлюз по SSH-туннелю с его настоящими Host/Origin. Этот повторный прогон не проходил через Tor; отдельный тест сети Tor выполнен ранее, в 14:18:44.850 UTC. На изолированном Docker-превью также проверены повторный вход в другой вкладке, подключение и выход гостя, отсутствие горизонтального переполнения при ширине 390px.
+
+Сайт и relay healthy, без перезапусков и OOM. Изоляция relay сохранена, Telegram не перезапускался, Tor активен. Публичный JSON-отчёт совпадает с проверенным локальным файлом. Старые контейнеры сохранены для отката кода, но прежняя переписка из RAM после согласованного обновления невосстановима. Обновление только отчёта в веб-контейнере оставляет relay и новые беседы работать.
+
+Ключи исходной вкладки теряются при её закрытии или перезагрузке. Статус может задерживаться из-за сна браузера или ОС; тайм-аут проверен тестовыми часами. Тест потери сети через эмуляцию браузера не засчитан. Физическая мобильная клавиатура и суточная непрерывная работа не проверялись. Это техническая самопроверка, не независимый аудит. В отчётах нет переписки пользователей, секретных ссылок, ключей или токенов.

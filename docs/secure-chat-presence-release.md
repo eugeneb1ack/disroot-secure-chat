@@ -36,7 +36,19 @@ Browser checks against an isolated Docker preview:
 - Presence is relay-reported availability, not proof of identity, instantaneous disconnect detection or cryptographic revocation. The OS can suspend background pages. No attempt is made to bypass browser power management.
 - The 20-second timeout is exercised with an injected relay clock. Browser logout was checked directly; browser network emulation did not produce an observable offline state and is not counted as a passed network-loss test.
 - These are bounded regression/security tests, not an independent audit, a physical-device keyboard test or a 24-hour endurance run.
-- Updating the RAM-only relay ends its active conversations. Deployment requires an explicit release window; deployment evidence is recorded after release, not inferred from local tests.
+- Updating the RAM-only relay ends its active conversations. The deployment below used an explicitly approved release window. A later documentation-only web update does not restart the relay.
+
+## Production deployment
+
+Application revision `d76321a` was deployed on 2026-09-14. Both the web application and relay initially used the corresponding `d76321a-amd64` images. The old containers were retained for code rollback; their former RAM-only conversations cannot be recovered.
+
+The isolated candidate passed the nine HTTP scenarios at **17:41:08.148 UTC**. The published HTTPS endpoint passed them at **17:42:16.810 UTC**, including three simultaneous writers, replies, reactions, presence and orphaned-invitation rejection. The production onion gateway passed the same scenarios at **17:43:52.114 UTC** using its exact onion Host/Origin through a loopback SSH tunnel. This last check did not traverse the Tor network. [Machine-readable HTTP results](../public/secure-chat/reports/presence-release-http.json).
+
+Production browser checks confirmed a sent Russian/emoji message, reuse of the same participant and message through the copied invitation, and preservation after Back to site and reopening chat. English and Russian messenger/security controls rendered. The synthetic browser session was then ended.
+
+The homepage, chat, security page and automated JSON report returned HTTP 200. The published JSON matched the local 95-check report byte-for-byte. Chat/security responses used `no-store, private` and CSP. Both containers were healthy with zero restarts and no OOM. The relay remained on one internal network without a published port or persistent mount. Existing environment/data mounts were preserved; Telegram containers were not restarted. The Tor service remained active, and nginx configuration validation passed.
+
+[Public CI for the application revision](https://github.com/eugeneb1ack/disroot-secure-chat/actions/runs/34874952906) passed the 95 automated checks, lint and production build. Deployment smoke checks are additional functional evidence, not additional entries in that automated test count.
 
 ## Русский
 
@@ -45,5 +57,9 @@ Browser checks against an isolated Docker preview:
 Список участников показывает, кто онлайн, кто подключается и у кого нет связи. Без успешного опроса статус истекает через 20 секунд. Relay хранит только последнее время опроса временной сессии в RAM. Никнеймы и связь fingerprint с транспортом остаются в подписанных зашифрованных профилях. Статус не отзывает ключ и не подтверждает личность человека.
 
 Потерянные ключи восстановить нельзя: закрытие или перезагрузка исходного документа остаются границей сессии. Если принять гостя больше некому, вход выдаёт понятную ошибку, а не создаёт ещё одного участника в бесконечном ожидании. Фактические тесты и ограничения перечислены выше; это техническая самопроверка, не независимый аудит.
+
+Версия приложения `d76321a` опубликована 14 сентября 2026 года. На рабочем HTTPS-адресе прошли девять сценариев с тремя клиентами: обмен сообщениями, ответы и реакции, одновременная отправка без ручных повторов, статусы, выход и отклонение ссылки без оставшихся участников. Отдельно проверен production onion-шлюз через SSH-туннель с настоящими Host/Origin; этот повторный прогон не проходил через сеть Tor. В браузере подтверждены возврат по своей ссылке и через «На сайт» с сохранением участника и сообщения. Публичный CI прошёл 95 автоматических проверок, lint и сборку.
+
+Сайт и relay healthy. Старые контейнеры сохранены для отката кода, но завершённые при согласованном обновлении беседы из RAM восстановить нельзя. Telegram не перезапускался, Tor остался активен. Обновление только документации в веб-контейнере не перезапускает relay и не завершает новые беседы.
 
 Browser lifecycle references: [Page Visibility API](https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API), [BroadcastChannel](https://developer.mozilla.org/en-US/docs/Web/API/Broadcast_Channel_API). Background timers and document lifetimes are browser-controlled; the implementation does not promise persistence after a document is destroyed.
