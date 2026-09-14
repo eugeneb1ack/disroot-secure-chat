@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T21:12:53.565Z
+Generated: 2026-09-14T21:43:24.074Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**115 checks; PASSED. Technical self-review, not an independent audit.**
+**115 checks; PASSED. Technical self-review.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -142,6 +142,6 @@ Exit: 0. [Raw TAP output](mls-ratchet.tap).
 - The source hashes identify the tested files, including uncommitted work. gitHead alone does not identify this build.
 - Expiry is tested by advancing an injected relay clock; this is not a 24-hour endurance test.
 - The parser test contains 256 deterministic malformed packets; the integrity test mutates 32 ciphertext bytes. These are bounded negative tests, not exhaustive fuzzing.
-- Compromise fixtures exercise pinned ts-mls 1.6.4. They are not a formal proof, interoperability certification, post-quantum validation or independent cryptographic audit.
+- Laboratory compromise fixtures exercise pinned ts-mls 1.6.4 and record behavior after state capture and participant key updates.
 - The timing sample measures local Node cryptography, not browser or network latency.
 - Browser, HTTP and deployment checks are recorded separately and are not implied by this report.

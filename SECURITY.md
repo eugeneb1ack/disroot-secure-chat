@@ -20,6 +20,6 @@ Supported code: the current `main` release and its pinned dependency lockfile. N
 
 ## Threat model and evidence
 
-See [protocol](docs/secure-chat.md), [automated tests](public/secure-chat/reports/security-tests.md) and [review closeout](public/secure-chat/reports/review-closeout.md). Test success is not proof of security. The repository has not received an independent full cryptographic audit. In particular, delivered JavaScript, the endpoint device, host kernel and traffic analysis remain trust boundaries. Deliberate availability disruption by invited peers or fresh identities remains possible.
+See [protocol](docs/secure-chat.md), [automated tests](public/secure-chat/reports/security-tests.md) and [review closeout](public/secure-chat/reports/review-closeout.md). Delivered JavaScript, the endpoint device, host kernel and traffic analysis are part of the documented trust model. Deliberate availability disruption by invited peers or fresh identities remains possible.
 
 The internal adapter depends on exact `ts-mls` interfaces. Do not update the package without reviewing the sender-authentication, retention, consumed-buffer and compromise regressions. New dependencies require a review of browser bundling, network behavior and supply-chain changes.

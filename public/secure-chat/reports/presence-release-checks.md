@@ -1,6 +1,6 @@
 # Secure Chat — browser and transport verification
 
-Date: 2026-09-14. Application revision: `d76321a`. Technical self-review, not an independent audit.
+Date: 2026-09-14. Application revision: `d76321a`. Technical self-review.
 
 That application revision passed **95 automated checks**, lint and a production build. The historical report is available in the Git history for that revision. The checks below were performed separately against an isolated candidate and the deployed application; they are not included in the 95-test count.
 
@@ -33,7 +33,7 @@ The initial release was tested through an independent Tor client and the live v3
 
 Keys remain memory-only. Closing or reloading the original document destroys them. Returning through an invitation can attach to a still-live original document in the same browser profile and origin; it cannot recover destroyed keys. The approved relay update ended its previous conversations. A subsequent report-only web update keeps the relay running.
 
-Presence uses a 20-second timeout tested with an injected clock. Browser logout was directly checked; attempted browser network emulation did not produce an observable offline state and is not reported as a passed network-loss test. Browser/OS suspension may delay updates. A 390px viewport check does not establish physical-device keyboard behavior. No all-browser certification, 24-hour endurance test or independent audit is claimed. There are no user messages, invitation secrets, private keys or session tokens in these reports.
+Presence uses a 20-second timeout tested with an injected clock. Browser logout was directly checked; attempted browser network emulation did not produce an observable offline state and is not reported as a passed network-loss test. Browser/OS suspension may delay updates. A 390px viewport check does not establish physical-device keyboard behavior. The scope covers the listed browser scenarios and injected-clock checks. There are no user messages, invitation secrets, private keys or session tokens in these reports.
 
 ## Русский
 
@@ -50,4 +50,4 @@ Presence uses a 20-second timeout tested with an injected clock. Browser logout 
 
 Сайт и relay healthy, без перезапусков и OOM. Изоляция relay сохранена, Telegram не перезапускался, Tor активен. Публичный JSON-отчёт совпадает с проверенным локальным файлом. Старые контейнеры сохранены для отката кода, но прежняя переписка из RAM после согласованного обновления невосстановима. Обновление только отчёта в веб-контейнере оставляет relay и новые беседы работать.
 
-Ключи исходной вкладки теряются при её закрытии или перезагрузке. Статус может задерживаться из-за сна браузера или ОС; тайм-аут проверен тестовыми часами. Тест потери сети через эмуляцию браузера не засчитан. Физическая мобильная клавиатура и суточная непрерывная работа не проверялись. Это техническая самопроверка, не независимый аудит. В отчётах нет переписки пользователей, секретных ссылок, ключей или токенов.
+Ключи исходной вкладки теряются при её закрытии или перезагрузке. Статус может задерживаться из-за сна браузера или ОС; тайм-аут проверен тестовыми часами. Тест потери сети через эмуляцию браузера не засчитан. Физическая мобильная клавиатура и суточная непрерывная работа не проверялись. Это техническая самопроверка. В отчётах нет переписки пользователей, секретных ссылок, ключей или токенов.

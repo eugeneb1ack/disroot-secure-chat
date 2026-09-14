@@ -1,6 +1,6 @@
 # Secure Chat — session return and participant presence
 
-2026-09-14. Technical self-review; not an independent audit.
+2026-09-14. Technical self-review.
 
 ## Changes
 
@@ -35,7 +35,7 @@ Browser checks against an isolated Docker preview:
 - Keys remain memory-only. Closing or reloading the original document, browser eviction or browser shutdown still loses them. Returning through a copied invitation can reuse an original document that remains alive in the same browser profile and origin; it cannot reconstruct destroyed keys.
 - Presence is relay-reported availability, not proof of identity, instantaneous disconnect detection or cryptographic revocation. The OS can suspend background pages. No attempt is made to bypass browser power management.
 - The 20-second timeout is exercised with an injected relay clock. Browser logout was checked directly; browser network emulation did not produce an observable offline state and is not counted as a passed network-loss test.
-- These are bounded regression/security tests, not an independent audit, a physical-device keyboard test or a 24-hour endurance run.
+- These are bounded regression/security tests. Physical-device keyboard checks and a 24-hour endurance run are outside this run.
 - Updating the RAM-only relay ends its active conversations. The deployment below used an explicitly approved release window. A later documentation-only web update does not restart the relay.
 
 ## Production deployment
@@ -56,7 +56,7 @@ The homepage, chat, security page and automated JSON report returned HTTP 200. T
 
 Список участников показывает, кто онлайн, кто подключается и у кого нет связи. Без успешного опроса статус истекает через 20 секунд. Relay хранит только последнее время опроса временной сессии в RAM. Никнеймы и связь fingerprint с транспортом остаются в подписанных зашифрованных профилях. Статус не отзывает ключ и не подтверждает личность человека.
 
-Потерянные ключи восстановить нельзя: закрытие или перезагрузка исходного документа остаются границей сессии. Если принять гостя больше некому, вход выдаёт понятную ошибку, а не создаёт ещё одного участника в бесконечном ожидании. Фактические тесты и ограничения перечислены выше; это техническая самопроверка, не независимый аудит.
+Потерянные ключи восстановить нельзя: закрытие или перезагрузка исходного документа остаются границей сессии. Если принять гостя больше некому, вход выдаёт понятную ошибку, а не создаёт ещё одного участника в бесконечном ожидании. Фактические тесты и ограничения перечислены выше; это техническая самопроверка.
 
 Версия приложения `d76321a` опубликована 14 сентября 2026 года. На рабочем HTTPS-адресе прошли девять сценариев с тремя клиентами: обмен сообщениями, ответы и реакции, одновременная отправка без ручных повторов, статусы, выход и отклонение ссылки без оставшихся участников. Отдельно проверен production onion-шлюз через SSH-туннель с настоящими Host/Origin; этот повторный прогон не проходил через сеть Tor. В браузере подтверждены возврат по своей ссылке и через «На сайт» с сохранением участника и сообщения. Публичный CI прошёл 95 автоматических проверок, lint и сборку.
 

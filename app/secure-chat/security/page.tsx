@@ -4,7 +4,7 @@ import { SecurityReviewContent } from "@/components/secure-chat/security-review"
 
 export const metadata: Metadata = {
   title: "Secure Chat · Security Review · dis/root",
-  description: "Browser keys, encryption, invitations and 24-hour deletion. Technical self-review in English and Russian: controls, trust boundaries and reproducible checks.",
+  description: "One link. Your keys. MLS end-to-end encryption. Explore the chat architecture, lifecycle, open source and reproducible checks in English and Russian.",
   alternates: { canonical: "/secure-chat/security" },
 };
 

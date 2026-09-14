@@ -1,6 +1,6 @@
 # Sending and session return — regression checks
 
-2026-09-14. Technical self-review, not an independent audit.
+2026-09-14. Technical self-review.
 
 ## Defects and correction
 
@@ -21,7 +21,7 @@ The landing-page modal also did not reopen after a document reload. Its page all
 - A legacy invitation using /#secure-chat?... redirected to /secure-chat with its fragment preserved until client consumption.
 - Before the patch, five ordinary production text exchanges were measured independently: 557–609 ms for send plus recipient poll. API requests were mostly 129–181 ms. This baseline did not reproduce every condition of the user's browser; the destructive error path was reproduced with controlled faults.
 
-No production traffic was intercepted or fault-injected. The fault proxy was local, used disposable test sessions, and is not part of the runtime image. No real invitation, private key, token or user message is in this report. The tests do not establish support for every browser, guarantee delivery during an outage or constitute an independent audit.
+No production traffic was intercepted or fault-injected. The fault proxy was local, used disposable test sessions, and is not part of the runtime image. No real invitation, private key, token or user message is in this report. The checks cover the browser and recovery scenarios listed above.
 
 ## Русский
 
@@ -31,4 +31,4 @@ Open Chat и новые приглашения открывают отдельн
 
 113 автоматических тестов, lint и production-сборка прошли. В браузере локальный proxy больше минуты терял подтверждения после реального приёма пакета relay. Прежний fingerprint и ожидающее сообщение сохранились даже после перезагрузки. После отключения сбоя сообщение подтвердилось один раз. Проверены также возврат через главную и Open Chat, старый формат приглашения. Обычные пять обменов на production до исправления заняли 557–609 мс каждый, включая опрос получателя; все условия браузера пользователя этот замер не воспроизводит.
 
-Сбои вносились только в изолированный тестовый proxy. Переписка пользователей, ключи и токены в отчёт не включены. Это техническая самопроверка, не независимый аудит.
+Сбои вносились только в изолированный тестовый proxy. Переписка пользователей, ключи и токены в отчёт не включены. Это техническая самопроверка.

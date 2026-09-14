@@ -1,10 +1,10 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T21:12:53.565Z",
+  "generatedAt": "2026-09-14T21:43:24.074Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
-  "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "2b09b4749d335236e924be18f35160cbce6c3cf7",
+  "classification": "Automated integration and MLS regression tests",
+  "gitHead": "00b8d70542bb4dd81ec870ac314b18820adeee19",
   "sourceSha256": {
     "lib/secure-chat-protocol.ts": "ea0ad4ab25670df049c420e853914f36e661fb0bd415eeb1aaa02ccf5b893ed9",
     "lib/secure-chat-invite.ts": "f487dff425901c461ac96dc59a867f3a281145dad55b6173f6532b79806b75fe",
@@ -512,7 +512,7 @@
     "The source hashes identify the tested files, including uncommitted work. gitHead alone does not identify this build.",
     "Expiry is tested by advancing an injected relay clock; this is not a 24-hour endurance test.",
     "The parser test contains 256 deterministic malformed packets; the integrity test mutates 32 ciphertext bytes. These are bounded negative tests, not exhaustive fuzzing.",
-    "Compromise fixtures exercise pinned ts-mls 1.6.4. They are not a formal proof, interoperability certification, post-quantum validation or independent cryptographic audit.",
+    "Laboratory compromise fixtures exercise pinned ts-mls 1.6.4 and record behavior after state capture and participant key updates.",
     "The timing sample measures local Node cryptography, not browser or network latency.",
     "Browser, HTTP and deployment checks are recorded separately and are not implied by this report."
   ]

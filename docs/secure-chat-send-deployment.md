@@ -1,6 +1,6 @@
 # Send recovery: production verification
 
-2026-09-14. Technical self-review, not an independent audit.
+2026-09-14. Technical self-review.
 
 The deployed site source is `41689b8`; the corresponding standalone public source is `e7d22d8`. The deployment updated the web container only. The existing relay kept the same container ID and start time; its active conversations were not reset. Telegram services and the Tor service remained running.
 
@@ -35,4 +35,4 @@ These checks used disposable test conversations. No user's invitation or corresp
 
 В браузере участник, созданный до обновления, восстановился с прежним fingerprint. Сообщение с эмодзи отправилось и подтвердилось. Возврат через главную и Open Secure Chat открыл прежнюю переписку без повторного ввода имени. Повторная перезагрузка сохранила подтверждённое сообщение. Кнопка New chat затем завершила только эту тестовую сессию и показала форму новой беседы. Контрольная локальная потеря подтверждений больше минуты, включая перезагрузку, отдельно описана в отчёте о восстановлении.
 
-Это техническая самопроверка на тестовых беседах, не независимый аудит. Ключи и сообщения пользователей в отчёт не включены. Проверка не заменяет суточный нагрузочный прогон и не восстанавливает ключи, которые уже были удалены старой версией или настройками браузера.
+Это техническая самопроверка на тестовых беседах. Ключи и сообщения пользователей в отчёт не включены. Проверка не заменяет суточный нагрузочный прогон и не восстанавливает ключи, которые уже были удалены старой версией или настройками браузера.

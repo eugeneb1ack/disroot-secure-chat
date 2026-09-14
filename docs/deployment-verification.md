@@ -28,7 +28,7 @@ The optional onion address is published on the site's Security page. Tor uses th
 
 ## Limits and diagnostics
 
-This is a technical self-review, not an independent cryptographic audit. The onion check used the actual client code in Node with curl/SOCKS remote DNS through a separate Tor client. It is not a Tor Browser UI certification. Initial circuits needed warm-up; an initial post-release test lost its SSH diagnostic tunnel and passed after that tunnel was restored. HTTPS did not use that test tunnel. Network timing varies.
+This is a technical self-review. The onion check used the actual client code in Node with curl/SOCKS remote DNS through a separate Tor client. It is not a Tor Browser UI certification. Initial circuits needed warm-up; an initial post-release test lost its SSH diagnostic tunnel and passed after that tunnel was restored. HTTPS did not use that test tunnel. Network timing varies.
 
 Temporary diagnostic SOCKS listeners and setup logs are removed after validation. The dedicated onion service stays active. The RAM relay has no special test-data deletion bypass: synthetic test conversations follow the same 24-hour deadline as any other conversation. Expiry tests use injected time; no 24-hour endurance run or physical erasure guarantee is claimed.
 
@@ -42,4 +42,4 @@ Telegram-poller и его proxy не перезапускались. Все де
 
 Публичный CI прошёл 62 проверки безопасности, lint и production-сборку. Проверка опубликованных npm advisory для production-зависимостей не нашла известных уязвимостей на дату релиза. Это не доказательство отсутствия новых ошибок.
 
-Tor проверялся реальным криптографическим клиентом через отдельный Tor-процесс, а не интерфейсом Tor Browser. Первая попытка после релиза потеряла диагностический SSH-туннель; после его восстановления полный сценарий прошёл. Временные SOCKS-порты и setup-логи убраны; рабочий onion-сервис остаётся активным. Синтетические тестовые беседы удаляются по обычному сроку, специального административного обхода нет. Проверка 24 часов использует тестовые часы. Независимый аудит и гарантированное физическое стирание памяти не заявляются.
+Tor проверялся реальным криптографическим клиентом через отдельный Tor-процесс, а не интерфейсом Tor Browser. Первая попытка после релиза потеряла диагностический SSH-туннель; после его восстановления полный сценарий прошёл. Временные SOCKS-порты и setup-логи убраны; рабочий onion-сервис остаётся активным. Синтетические тестовые беседы удаляются по обычному сроку, специального административного обхода нет. Проверка 24 часов использует тестовые часы. Удаление относится к состоянию приложения; физическое управление памятью остаётся за средой выполнения.

@@ -48,29 +48,29 @@ Replies carry only the original message ID and author fingerprint. The quote is 
 
 The browser keeps an AES-256-GCM encrypted checkpoint in IndexedDB until the shared deadline. It includes the temporary identity, current MLS state, relay token and up to 256 locally received messages. The non-extractable wrapping CryptoKey is stored by the same browser; neither it nor the checkpoint is uploaded. Reloading or reopening the same invitation in the same profile and origin restores that participant without signing in again. Web Locks permit only one active MLS writer; other tabs use BroadcastChannel. Closing the page suspends the session without logout. New chat ends the current session, deletes the local record and revokes its transport token. A private browser window, cleared site data, storage eviction or switching origin/device can remove or hide the saved session. The relay must still exist, and its bounded event window must cover the missed updates.
 
-## Conditions and limits
+## Operating conditions
 
-### Forward secrecy has specific conditions
+### Key updates and recovery
 
-Consumed generations and old epochs are discarded. A copied participant state is not healed merely because another member updates. Recovery requires that the affected participant makes an honest update after the attacker loses access to its device. This suite is classical, not post-quantum. There is no claim of security superior or equivalent to Signal, and no independent audit of this integration or the selected ts-mls release is asserted.
+Consumed generations and old epochs are discarded. A copied participant state is not healed merely because another member updates. Recovery requires that the affected participant makes an honest update after the attacker loses access to its device. This suite is classical, not post-quantum.
 
-### The delivered client remains trusted
+### Client and delivery trust model
 
 A compromised website, extension, browser or device can steal plaintext and live keys. MLS does not fix hostile JavaScript delivered by the operator. A malicious relay can delay, suppress or partition traffic; transcript comparison helps participants notice divergent views but is not an external transparency service. Compare full key fingerprints and conversation codes through another trusted channel.
 
-### An invitation grants access
+### Invitation access
 
 Anyone with the full link can join while a participant is online and capacity remains. There is no revocation, moderation or recovery backdoor. Closing a tab does not revoke a copied invitation. If every participant loses their keys, the existing conversation cannot be reconstructed by the server. After losing the original tab’s keys, a returning user creates a new temporary identity.
 
-### Deletion is bounded by the endpoints
+### Data lifecycle
 
 Expiry removes active application references and best-effort wipes mutable key buffers. JavaScript and browser memory do not guarantee physical zeroization. Recipients can keep messages or screenshots. A malicious host can record ciphertext or metadata. The server cannot recover lost keys, and code cannot erase copies held elsewhere. Local recovery trades memory-only deletion for persistence on this device. The wrapping key prevents raw-key export through Web Crypto, but it is not a password or protection against malicious same-origin code, an unlocked browser profile or a compromised device. Current checkpoints exclude historical MLS epochs; storage snapshots, browser/OS backups and forensic remnants can still retain earlier checkpoints or readable history after local decryption. An open client deletes its record at expiry; while the browser is closed it cannot execute deletion, so expired records are refused and removed on the next visit. Physical erasure is not promised.
 
-### Anonymity is not invisibility
+### HTTPS, VPN and Tor
 
 Ordinary HTTPS exposes a peer address to the network endpoint even when access logs are disabled. A VPN replaces that address with the provider’s exit address. Tor Browser can separate your access network from the destination; timing correlation, an exposed invitation and a compromised endpoint remain risks. Transport identifiers and traffic patterns remain visible to the relay.
 
-### Availability is deliberately bounded
+### Capacity and admission
 
 Global and per-session quotas reduce overload without storing IP addresses; fresh keys can still be used for Sybil attacks. A malicious invited participant can disrupt a conversation. Guests need an existing participant online within the two-minute admission window. A tab that misses more than the retained event window must rejoin with a fresh key. Encryption does not guarantee delivery or protection from denial of service.
 

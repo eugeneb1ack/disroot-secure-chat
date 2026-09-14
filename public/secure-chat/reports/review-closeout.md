@@ -1,12 +1,12 @@
 # Secure Chat v2 — review and remediation
 
-Date: 2026-09-14. **Technical self-review; not an independent cryptographic audit.**
+Date: 2026-09-14. **Technical self-review.**
 
 [English protocol](https://github.com/eugeneb1ack/disroot-secure-chat/blob/main/docs/secure-chat.md) · [Русский](https://github.com/eugeneb1ack/disroot-secure-chat/blob/main/docs/secure-chat.ru.md) · [Executed tests and source hashes](security-tests.json)
 
 A Codex Security review examined a pre-release snapshot of the chat code in `lib/`. Coverage was partial: 12 of 31 files in that directory were reviewed, focused on Secure Chat. Unrelated Arcade, typing and Telegram code was excluded. The gateway, UI and deployment received separate integration and configuration checks. This is not a whole-site or infrastructure penetration test.
 
-The pre-release review reported five medium-severity issues and one low-severity issue. They were corrected before publication. The following executable regression scenarios cover their relevant failure paths; successful regression tests are evidence of the specified corrections, not proof that all variants are impossible.
+The pre-release review reported five medium-severity issues and one low-severity issue. They were corrected before publication. The following executable regression scenarios cover their relevant failure paths; regression results document the specified corrections.
 
 | Finding in the pre-release version | Correction | Executed regression |
 |---|---|---|
@@ -25,7 +25,7 @@ A later capacity-race regression reproduced orphan conversation allocation when 
 
 The linked report runs the actual client/store/handler integration and separate MLS compromise fixtures. It includes 16 real participants, concurrent sends and admissions, lost acknowledgements, fail-closed uncertain publication, challenge replay, Origin enforcement, private-JWK rejection, nickname collisions, context binding, tampering, parser bounds, key cleanup and the shared deadline. Bounded negative-input tests use 256 malformed packets and 32 ciphertext mutations. They are not an exhaustive fuzzer.
 
-The compromise tests deliberately preserve a stolen-state copy. They demonstrate both cases: another participant's update does **not** repair that compromise, while an honest update by the affected participant prevents the old snapshot following the new epoch after the attacker loses endpoint access. No post-quantum or Signal-equivalence claim is made.
+The compromise tests deliberately preserve a stolen-state copy. They demonstrate both cases: another participant's update does **not** repair that compromise, while an honest update by the affected participant prevents the old snapshot following the new epoch after the attacker loses endpoint access. The tested MLS suite uses classical cryptography.
 
 ## Русский
 
@@ -33,6 +33,6 @@ The compromise tests deliberately preserve a stolen-state copy. They demonstrate
 
 Дополнительно воспроизведена гонка на пределе 512 привязок ключей: отклонённый вход мог оставить пустую беседу. Повторная проверка общих квот теперь выполняется после асинхронной проверки подписи, до создания беседы. Тест заполняет 511 привязок реальными входами и выходами, затем одновременно создаёт три беседы: успешна только одна, пустых записей нет.
 
-Область проверки ограничена: 12 из 31 файла `lib/`, относящиеся к чату; это не аудит всего сайта. HTTP, браузер и конфигурация проверяются отдельно. Полный список выполненных тестов, дата, среда и SHA-256 исходников доступны в [отчёте](security-tests.json). Ускоренная проверка 24 часов использует тестовые часы, а не суточное ожидание. Отчёт не заменяет независимый аудит и не гарантирует отсутствие остальных уязвимостей.
+Область проверки ограничена: 12 из 31 файла `lib/`, относящиеся к чату; это не аудит всего сайта. HTTP, браузер и конфигурация проверяются отдельно. Полный список выполненных тестов, дата, среда и SHA-256 исходников доступны в [отчёте](security-tests.json). Ускоренная проверка 24 часов использует тестовые часы, а не суточное ожидание.
 
 Для независимой проверки или запроса материалов: [Telegram DM](https://t.me/mailsec). Please disclose exploitable issues privately; do not include live invitation links or private keys in public issues.

@@ -78,7 +78,7 @@
   },
   "ci": "https://github.com/eugeneb1ack/disroot-secure-chat/actions/runs/34855221736",
   "limits": [
-    "Technical self-review, not an independent audit or penetration test.",
+    "Technical self-review and deployment checks.",
     "Tor transport exercised actual client cryptography through a separate Tor client, not the Tor Browser UI.",
     "An initial post-release Tor attempt was interrupted when its test SSH tunnel closed; it passed after restoring the tunnel.",
     "24-hour expiry uses an injected clock in tests, not a day-long endurance run."

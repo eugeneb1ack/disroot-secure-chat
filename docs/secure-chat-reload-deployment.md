@@ -12,7 +12,7 @@ Date: 2026-09-14. Runtime source: `aed5639` (site), `35ab627` (public chat repos
 - The website and relay were healthy, with zero web-container restarts and no OOM. Relay and both Telegram containers retained their exact container IDs and start times. Tor remained active. Existing environment values and data mounts were preserved. Nginx configuration validation passed.
 - The previous web container/image and nginx configuration were retained for rollback. Only the web container was replaced; relay RAM state remained active.
 
-The [browser and crash-test report](../public/secure-chat/reports/release-checks.md) covers local tab close/reopen, guest reload, multiple tabs, explicit End session and 390px layout checks. These are distinct from a full browser-process restart or a 24-hour endurance run, which were not performed. Already-destroyed keys from the previous version are unrecoverable. There are no user messages, invitation secrets, keys or tokens in these reports. This is technical self-review, not an independent audit.
+The [browser and crash-test report](../public/secure-chat/reports/release-checks.md) covers local tab close/reopen, guest reload, multiple tabs, explicit End session and 390px layout checks. These are distinct from a full browser-process restart or a 24-hour endurance run, which were not performed. Already-destroyed keys from the previous version are unrecoverable. There are no user messages, invitation secrets, keys or tokens in these reports. This is a technical self-review.
 
 ## Русский
 
@@ -24,4 +24,4 @@ The [browser and crash-test report](../public/secure-chat/reports/release-checks
 
 Обновлён только веб-контейнер. ID и время старта relay и Telegram не изменились, Tor активен, веб и relay healthy, OOM нет. Сохранены все 25 старых статических файлов, параметры окружения, монтирования, предыдущий контейнер и конфигурация nginx для отката. Живое состояние relay не уничтожалось.
 
-Полный перезапуск процесса браузера и суточный прогон не выполнялись. Закрытие/повторное открытие вкладки, возврат гостя, несколько вкладок, явный выход и ширина 390px проверены на изолированном превью и описаны в отдельном отчёте. Уже потерянные ключи старой версии восстановить невозможно. Это техническая самопроверка, не независимый аудит.
+Полный перезапуск процесса браузера и суточный прогон не выполнялись. Закрытие/повторное открытие вкладки, возврат гостя, несколько вкладок, явный выход и ширина 390px проверены на изолированном превью и описаны в отдельном отчёте. Уже потерянные ключи старой версии восстановить невозможно. Это техническая самопроверка.

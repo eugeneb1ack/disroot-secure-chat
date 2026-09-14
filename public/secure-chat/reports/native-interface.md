@@ -1,6 +1,6 @@
 # Interface and multiple-tab regression checks
 
-Verification date: 2026-09-14 UTC. This is an implementation report, not an independent security audit.
+Verification date: 2026-09-14 UTC. Implementation and regression report.
 
 ## Reproduced delivery failure
 
@@ -32,7 +32,7 @@ No user conversations, invitation secrets or private keys are included in this r
 
 # Проверка интерфейса и нескольких вкладок
 
-Дата проверки: 14 сентября 2026 года, UTC. Это отчёт о реализации, не независимый аудит безопасности.
+Дата проверки: 14 сентября 2026 года, UTC. Отчёт о реализации и регрессионных проверках.
 
 ## Воспроизведённый сбой отправки
 

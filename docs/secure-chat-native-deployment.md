@@ -11,7 +11,7 @@ Runtime source: `3573c43` in the site repository. Public source: `63716b5` in `e
 
 The previous relay had rejected a new test conversation with a capacity error. The new implementation reclaims unreachable conversations when the room bound is reached, without evicting admitted offline sessions. The user's prior authorization to clear keys was used for this relay transition: old production invitations do not restore conversations through the new relay. Users must start a fresh conversation. The old isolated relay was retained on its old private network for rollback and applies its existing expiry clock; it is no longer the public chat's relay. No message/key state was copied between relays.
 
-Physical iOS/Android long-press and software-keyboard behavior was not tested on hardware. The lower-edge right-click regression was reproduced and verified in the browser, as were menu dismissal, encrypted reactions, reload recovery and multiple-tab UI use. This is technical self-verification, not an independent security audit or a claim of invulnerability.
+Physical iOS/Android long-press and software-keyboard behavior was not tested on hardware. The lower-edge right-click regression was reproduced and verified in the browser, as were menu dismissal, encrypted reactions, reload recovery and multiple-tab UI use. This is a technical self-review of the implementation.
 
 ## Проверка выпуска
 
@@ -21,4 +21,4 @@ Physical iOS/Android long-press and software-keyboard behavior was not tested on
 
 При переключении использовано ранее данное разрешение сбросить ключи ради исправления. Старые production-ссылки относятся к прежнему relay: для продолжения нужно создать новую беседу. Прежний изолированный relay сохранён для отката, без публичного маршрута; его данные удаляются по исходным срокам. Ключи и состояние между relay не переносились.
 
-Физический iPhone/Android с экранной клавиатурой в этом прогоне не проверялся. Мигание при правом клике снизу сообщения воспроизведено и исправлено; браузерная проверка меню, реакций, перезагрузки и нескольких вкладок выполнена. Это самостоятельная техническая проверка, не независимый аудит.
+Физический iPhone/Android с экранной клавиатурой в этом прогоне не проверялся. Мигание при правом клике снизу сообщения воспроизведено и исправлено; браузерная проверка меню, реакций, перезагрузки и нескольких вкладок выполнена. Это отчёт о технической проверке реализации.
