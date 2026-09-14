@@ -1,5 +1,6 @@
 import { b64, capability, digest, MlsConversation, randomId, seal, unseal, utf8, type PreparedPacket } from "./secure-chat-mls.ts";
-import { loginText, type ChatInvitation, type ChatView, type LoginChallenge, type LoginRequest, type ReadableMessage, type RelaySnapshot, type TransportPublicKey } from "./secure-chat-protocol.ts";
+import { loginText, type ChatInvitation, type ChatView, type LoginChallenge, type LoginRequest, type ReadableMessage, type RelaySnapshot, type TransportPublicKey, type MessageInteraction, type MessageReference, type Reaction } from "./secure-chat-protocol.ts";
+import { applyMessageEvent, findMessage, reactionFallback, validInteraction, validMessageText, validReference } from "./secure-chat-interactions.ts";
 
 export class ChatApiError extends Error {
   status: number;
@@ -61,7 +62,7 @@ export class SecureChatClient {
   get closed() { return this.#closed; }
   get view(): ChatView {
     return { ready: this.#crypto.ready, name: this.#crypto.name, expires: this.#crypto.invitation.expires,
-      members: this.#crypto.profiles, messages: this.#messages.map(value => ({ ...value })), identity: { ...this.#crypto.identity }, epoch: this.#crypto.epoch, verification: this.#crypto.verification };
+      members: this.#crypto.profiles, messages: structuredClone(this.#messages), identity: { ...this.#crypto.identity }, epoch: this.#crypto.epoch, verification: this.#crypto.verification };
   }
   #api<T>(action?: Record<string, unknown>) { return this.#transport<T>(action, this.#token, this.#seq); }
   #check() { if (this.#closed || this.invitation.expires <= Date.now()) { this.close(); throw new Error("This conversation has ended. Its keys have been discarded."); } }
@@ -97,8 +98,7 @@ export class SecureChatClient {
       const message = await this.#crypto.receive(event.id, event.wire, event.bootstrap);
       if (message) {
         const author = this.#crypto.profiles.find(profile => profile.id === message.sender)!;
-        this.#messages.push({ id: message.id, sender: message.sender, nickname: author.nickname, body: message.body, time: new Date().toISOString() });
-        if (this.#messages.length > 256) this.#messages.shift();
+        applyMessageEvent(this.#messages, message, author.nickname, new Date().toISOString());
       }
       this.#seq = event.seq;
     }
@@ -163,14 +163,30 @@ export class SecureChatClient {
       catch (error) { this.close(); throw error; }
     }
   }); }
-  send(body: string) { return this.#serial(async () => {
+  async send(body: string, replyTo?: MessageReference) {
+    // Ordinary draft errors must not destroy a healthy cryptographic session.
+    if (!validMessageText(body)) throw new ChatApiError("Invalid message text.", 409);
+    if (replyTo !== undefined && !validReference(replyTo)) throw new ChatApiError("Invalid message interaction.", 409);
+    return this.#send(body, replyTo ? { kind: "reply", target: { ...replyTo } } : undefined);
+  }
+  async react(target: MessageReference, emoji: Reaction | null) {
+    const interaction = { kind: "reaction" as const, target, emoji };
+    if (!validInteraction(interaction)) throw new ChatApiError("Invalid message interaction.", 409);
+    return this.#send(reactionFallback(emoji), structuredClone(interaction));
+  }
+  #send(body: string, interaction?: MessageInteraction) { return this.#serial(async () => {
     if (!this.#crypto.ready) throw new ChatApiError("Keep this tab open while an online participant connects you.", 409);
+    if (interaction && !findMessage(this.#messages, interaction.target)) throw new ChatApiError("The original message is no longer available in this tab.", 409);
     const lease = await this.#claim(), id = randomId();
+    // Catch eviction while catching up before any MLS generation is consumed.
+    if (interaction && !findMessage(this.#messages, interaction.target)) {
+      await this.#api({ action: "release", lease: lease.id });
+      throw new ChatApiError("The original message is no longer available in this tab.", 409);
+    }
     try {
-      const packet = await this.#crypto.prepareText(id, body);
+      const packet = await this.#crypto.prepareText(id, body, interaction);
       await this.#publish(id, lease.id, packet);
-      this.#messages.push({ id, sender: this.#crypto.identity.id, nickname: this.#crypto.identity.nickname, body, time: new Date().toISOString() });
-      if (this.#messages.length > 256) this.#messages.shift();
+      applyMessageEvent(this.#messages, { id, sender: this.#crypto.identity.id, body, interaction }, this.#crypto.identity.nickname, new Date().toISOString());
     } catch (error) { this.close(); throw error; }
   }); }
   close() {

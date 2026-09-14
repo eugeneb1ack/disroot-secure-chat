@@ -2,11 +2,12 @@
 
 import dynamic from "next/dynamic";
 import { animate, scrambleText } from "animejs";
-import { Component, type ReactNode, useEffect, useRef, useState } from "react";
+import { Component, type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { parseInvitation, type ChatInvitation } from "@/lib/secure-chat-invite";
+import { ChatLanguageProvider, ChatLanguageSwitch, useChatLanguage } from "./chat-language";
 
-const ChatWindow = dynamic(() => import("./chat-window").then(module => module.ChatWindow), { ssr: false, loading: () => <p className="chat-loading" role="status">Opening encrypted channel…</p> });
+const ChatWindow = dynamic(() => import("./chat-window").then(module => module.ChatWindow), { ssr: false, loading: ChatLoading });
 const invitations = [
   { lang: "en", text: "No account. Private. Anonymous." },
   { lang: "ru", text: "Без аккаунта. Приватно. Анонимно." },
@@ -16,15 +17,30 @@ const invitations = [
   { lang: "es", text: "Sin cuenta. Privado. Anónimo." },
 ];
 
-class ChatBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+function ChatLoading() {
+  const { t } = useChatLanguage();
+  return <p className="chat-loading" role="status">{t("Opening encrypted channel…", "Открываем зашифрованный чат…")}</p>;
+}
+
+class ChatBoundary extends Component<{ children: ReactNode; errorMessage: string }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() { return { failed: true }; }
-  render() { return this.state.failed ? <p className="chat-loading" role="alert">Could not open the chat. Close this window and try again.</p> : this.props.children; }
+  render() { return this.state.failed ? <p className="chat-loading" role="alert">{this.props.errorMessage}</p> : this.props.children; }
+}
+
+function ChatDialogContent({ invitation, onConsumed, onClose }: { invitation: ChatInvitation | null; onConsumed: () => void; onClose: () => void }) {
+  const { language, t } = useChatLanguage();
+  return <div className="chat-dialog-content" lang={language}>
+    <header className="chat-window-header"><div><p className="chat-eyebrow">dis/root · {t("encrypted conversations", "зашифрованные беседы")}</p><h2 id="secure-chat-title">Secure<span> Chat</span></h2></div><div className="chat-header-actions"><ChatLanguageSwitch /><button className="chat-icon-button" type="button" aria-label={t("Hide chat", "Свернуть чат")} onClick={onClose}>×</button></div></header>
+    <ChatBoundary errorMessage={t("Could not open the chat. Close this window and try again.", "Не удалось открыть чат. Закройте окно и попробуйте ещё раз.")}><ChatWindow invitation={invitation} onInvitationConsumed={onConsumed} /></ChatBoundary>
+  </div>;
 }
 
 export function SecureChatSection({ active, onOpenChange }: { active: boolean; onOpenChange: (open: boolean) => void }) {
   const [open, setOpen] = useState(false);
+  const [started, setStarted] = useState(false);
   const [invitation, setInvitation] = useState<ChatInvitation | null>(null);
+  const consumeInvitation = useCallback(() => setInvitation(null), []);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -36,7 +52,7 @@ export function SecureChatSection({ active, onOpenChange }: { active: boolean; o
       if (!next) return;
       // The fragment is never part of an HTTP request. Remove it from this history entry.
       history.replaceState(history.state, "", `${location.pathname}${location.search}#secure-chat`);
-      setInvitation(next); setOpen(true);
+      setInvitation(next); setStarted(true); setOpen(true);
     };
     const timer = window.setTimeout(readLink, 0);
     window.addEventListener("hashchange", readLink);
@@ -102,7 +118,7 @@ export function SecureChatSection({ active, onOpenChange }: { active: boolean; o
         <h2>Secure<span> Chat</span><i aria-hidden="true">_</i></h2>
         <p className="secure-chat-invitation" ref={textRef} lang="en">{invitations[0].text}</p>
         <p className="secure-chat-description">End-to-end encrypted. Keys stay in your browser. One link. Up to 24 hours. No archive.</p>
-        <button type="button" className="chat-button chat-primary" ref={buttonRef} onClick={() => setOpen(true)}>OPEN SECURE CHAT <span aria-hidden="true">↗</span></button>
+        <button type="button" className="chat-button chat-primary" ref={buttonRef} onClick={() => { setStarted(true); setOpen(true); }}>OPEN SECURE CHAT <span aria-hidden="true">↗</span></button>
         <p className="secure-chat-footnote">Temporary keys · Private invitations</p>
       </div>
       <div className="secure-chat-preview" ref={previewRef} aria-label="How Secure Chat works">
@@ -114,9 +130,8 @@ export function SecureChatSection({ active, onOpenChange }: { active: boolean; o
         <div className="secure-chat-preview-foot">One link <span>/</span> Invite friends <span>/</span> 24 hours</div>
       </div>
     </div>
-    {open && createPortal(<dialog className="secure-chat-dialog" ref={dialogRef} aria-labelledby="secure-chat-title" onCancel={event => { event.preventDefault(); setOpen(false); setInvitation(null); }} onTouchStart={event => event.stopPropagation()} onTouchEnd={event => event.stopPropagation()}>
-      <header className="chat-window-header"><div><p className="chat-eyebrow">dis/root · encrypted conversations</p><h2 id="secure-chat-title">Secure<span> Chat</span></h2></div><div className="chat-header-actions"><span className="chat-local-badge">MLS</span><button className="chat-icon-button" type="button" aria-label="Close and lock chat" onClick={() => { setOpen(false); setInvitation(null); }}>×</button></div></header>
-      <ChatBoundary><ChatWindow invitation={invitation} onInvitationConsumed={() => setInvitation(null)} /></ChatBoundary>
+    {started && createPortal(<dialog className="secure-chat-dialog" ref={dialogRef} aria-labelledby="secure-chat-title" onCancel={event => { event.preventDefault(); setOpen(false); setInvitation(null); }} onTouchStart={event => event.stopPropagation()} onTouchEnd={event => event.stopPropagation()}>
+      <ChatLanguageProvider><ChatDialogContent invitation={invitation} onConsumed={consumeInvitation} onClose={() => { setOpen(false); setInvitation(null); }} /></ChatLanguageProvider>
     </dialog>, document.body)}
   </>;
 }

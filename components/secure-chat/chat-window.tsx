@@ -1,19 +1,18 @@
 "use client";
 import { animate } from "animejs";
 import { type FormEvent, useCallback, useEffect, useRef, useState } from "react";
-import { MAX_TEXT as maxMessageLength, nicknamePattern, prettyFingerprint, type ChatView } from "@/lib/secure-chat-protocol";
-import type { SecureChatClient } from "@/lib/secure-chat-client";
+import { nicknamePattern, prettyFingerprint, type ChatView, type MessageReference, type Reaction } from "@/lib/secure-chat-protocol";
+import type { ChatSession } from "@/lib/secure-chat-session";
 import { ChatGuide } from "./chat-guide";
+import { chatError, useChatLanguage } from "./chat-language";
 import { ChatInviteLink } from "./chat-room-setup";
 import { invitationLink, type ChatInvitation } from "@/lib/secure-chat-invite";
-const emojiGroups = [
-  { name: "Faces", emoji: ["🙂", "😊", "😂", "😅", "🥹", "😎", "🤔", "🫠", "👀", "🤖", "👾", "💀"] },
-  { name: "Reactions", emoji: ["👍", "👋", "🙌", "🤝", "🫶", "❤️", "💚", "🔥", "✨", "🎉", "💯", "✅"] },
-  { name: "Terminal life", emoji: ["🔐", "🔑", "💻", "🛠️", "🐧", "🐛", "☕", "🍕", "🎮", "🎧", "🌙", "🚀"] },
-];
-
+import { ChatMessage } from "./chat-message";
+import { ChatComposer } from "./chat-composer";
+import { findMessage } from "@/lib/secure-chat-interactions";
 
 function IdentityGate({ onConnect, invited }: { onConnect: (nickname: string, name: string) => Promise<void>; invited: boolean }) {
+  const { language, t } = useChatLanguage();
   const [nickname, setNickname] = useState("");
   const [chatName, setChatName] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,54 +20,86 @@ function IdentityGate({ onConnect, invited }: { onConnect: (nickname: string, na
   const submit = async (event: FormEvent) => {
     event.preventDefault(); if (busy) return;
     setBusy(true); setError("");
-    try { await onConnect(nickname, chatName.trim() || "Private conversation"); }
+    try { await onConnect(nickname, chatName.trim() || t("Private conversation", "Приватная беседа")); }
     catch (error) { setError(error instanceof Error ? error.message : "Could not connect."); }
     finally { setBusy(false); }
   };
   return <div className="chat-identity-gate">
     <div className="chat-gate-symbol" aria-hidden="true">[ key ]</div>
-    <p className="chat-eyebrow">EPHEMERAL / MLS</p>
-    <h3>One link. Just us.</h3>
-    <p className="chat-muted">No account. No password. No backup to manage.</p>
-    <div className="chat-key-boundary"><div><span aria-hidden="true">⌑</span><p><strong>Your keys stay in this tab</strong><small>Generated in memory. Never uploaded or saved in browser storage.</small></p></div><div><span aria-hidden="true">↗</span><p><strong>The invitation opens the conversation</strong><small>Share it privately. Anyone with the full link can join.</small></p></div></div>
+    <p className="chat-eyebrow">{t("EPHEMERAL / MLS", "ВРЕМЕННЫЕ КЛЮЧИ / MLS")}</p>
+    <h3>{t("One link. Just us.", "Одна ссылка. Только мы.")}</h3>
+    <p className="chat-muted">{t("No account. No password. No backup to manage.", "Без аккаунта, пароля и резервных копий.")}</p>
+    <div className="chat-key-boundary"><div><span aria-hidden="true">⌑</span><p><strong>{t("Your keys stay in this tab", "Ключи остаются в этой вкладке")}</strong><small>{t("Generated in memory. Never uploaded or saved in browser storage.", "Создаются в памяти. Не передаются на сервер и не сохраняются в хранилище браузера.")}</small></p></div><div><span aria-hidden="true">↗</span><p><strong>{t("The invitation opens the conversation", "Ссылка открывает беседу")}</strong><small>{t("Share it privately. Anyone with the full link can join.", "Передайте её лично. Войти может любой, у кого есть полная ссылка.")}</small></p></div></div>
     <form onSubmit={submit} className="chat-key-form">
-      <label>Nickname<input name="nickname" autoComplete="off" spellCheck={false} required minLength={3} maxLength={24} pattern={nicknamePattern.source} value={nickname} disabled={busy} onChange={event => setNickname(event.target.value)} placeholder="your_alias" /></label>
-      {!invited && <label>Chat name <span className="chat-muted">(optional)</span><input name="chatName" autoComplete="off" maxLength={40} value={chatName} disabled={busy} onChange={event => setChatName(event.target.value)} placeholder="Private conversation" /></label>}
-      {error && <p className="chat-error" role="alert">{error}</p>}
-      <button className="chat-button chat-primary" type="submit" disabled={busy}>{busy ? "CREATING YOUR ENCRYPTED CONVERSATION…" : "GENERATE KEYS & ENTER →"}</button>
-      <p className="chat-form-note">Up to 24 hours, with one shared deadline. Closing or reloading this tab discards your keys sooner. An existing participant must be online to connect a new guest.</p>
-      <details className="chat-private-help"><summary>What identifies a participant?</summary><p>Every message is signed by a temporary key. Its fingerprint appears beside the nickname. Names are unique in the verified conversation roster, but they are not accounts or proof of a real identity. A fresh session has a different fingerprint.</p></details>
-      <details className="chat-private-help"><summary>What reaches the server?</summary><p>Encrypted messages and encrypted participant profiles, temporary connection identifiers and routing metadata. Your invitation secret, message keys and readable messages stay with the participants. The HTTPS server can still see your network address during a connection; it does not need to log it. A compromised website or device remains a point of trust.</p></details>
+      <label>{t("Nickname", "Никнейм")}<input name="nickname" autoComplete="off" spellCheck={false} required minLength={3} maxLength={24} pattern={nicknamePattern.source} value={nickname} disabled={busy} onChange={event => setNickname(event.target.value)} placeholder="your_alias" title={t("3–24 Latin letters, numbers, dots, underscores or hyphens", "3–24 латинские буквы, цифры, точки, дефисы или подчёркивания")} /></label>
+      {!invited && <label>{t("Chat name", "Название беседы")} <span className="chat-muted">{t("(optional)", "(необязательно)")}</span><input name="chatName" autoComplete="off" maxLength={40} value={chatName} disabled={busy} onChange={event => setChatName(event.target.value)} placeholder={t("Private conversation", "Приватная беседа")} /></label>}
+      {error && <p className="chat-error" role="alert">{chatError(error, language)}</p>}
+      <button className="chat-button chat-primary" type="submit" disabled={busy}>{busy ? t("CREATING YOUR ENCRYPTED CONVERSATION…", "СОЗДАЁМ ЗАШИФРОВАННУЮ БЕСЕДУ…") : t("GENERATE KEYS & ENTER →", "СОЗДАТЬ КЛЮЧИ И ВОЙТИ →")}</button>
+      <p className="chat-form-note">{t("Up to 24 hours, with one shared deadline. Closing or reloading this tab discards your keys sooner. An existing participant must be online to connect a new guest.", "До 24 часов с единым сроком для всех. Закрытие или перезагрузка вкладки удаляет её ключи раньше. Для входа нового гостя нужен участник онлайн.")}</p>
+      <details className="chat-private-help"><summary>{t("What identifies a participant?", "Как отличить участника?")}</summary><p>{t("Every message is signed by a temporary key. Its fingerprint appears beside the nickname. Names are unique in the verified conversation roster, but they are not accounts or proof of a real identity. A fresh session has a different fingerprint.", "Каждое сообщение подписано временным ключом. Рядом с никнеймом указан его fingerprint. Никнеймы в проверенном списке участников не повторяются, но не подтверждают личность человека. В новой сессии будет другой fingerprint.")}</p></details>
+      <details className="chat-private-help"><summary>{t("What reaches the server?", "Что получает сервер?")}</summary><p>{t("Encrypted messages and encrypted participant profiles, temporary connection identifiers and routing metadata. Your invitation secret, message keys and readable messages stay with the participants. The HTTPS server can still see your network address during a connection; it does not need to log it. A compromised website or device remains a point of trust.", "Зашифрованные сообщения и профили, временные идентификаторы соединений и данные для доставки. Секрет приглашения, ключи сообщений и открытый текст остаются у участников. При HTTPS сервер видит сетевой адрес подключения, даже без его записи в логи. Взломанный сайт или устройство могут нарушить защиту.")}</p></details>
     </form>
   </div>;
 }
 
 export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: ChatInvitation | null; onInvitationConsumed: () => void }) {
+  const { language, t } = useChatLanguage();
   const [view, setView] = useState<ChatView | null>(null);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
   const [connected, setConnected] = useState(false);
+  const [resuming, setResuming] = useState(!!invitation);
+  const [mirrored, setMirrored] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<MessageReference>();
   const [inviteLink, setInviteLink] = useState("");
   const [showInvite, setShowInvite] = useState(false);
-  const clientRef = useRef<SecureChatClient | null>(null);
+  const clientRef = useRef<ChatSession | null>(null);
   const generation = useRef(0);
-  const composerRef = useRef<HTMLTextAreaElement>(null);
-  const emojiRef = useRef<HTMLDivElement>(null);
-  const emojiButtonRef = useRef<HTMLButtonElement>(null);
-  const selection = useRef({ start: 0, end: 0 });
   const messagesRef = useRef<HTMLDivElement>(null);
   const nearBottom = useRef(true);
-  const roomName = view?.name ?? "Private conversation";
+  const roomName = view?.name ?? t("Private conversation", "Приватная беседа");
+  const count = view?.members.length ?? 0;
+  const plural = new Intl.PluralRules(language).select(count);
+  const participantLabel = t(count === 1 ? "participant" : "participants", plural === "one" ? "участник" : plural === "few" ? "участника" : "участников");
+  const dateLocale = language === "ru" ? "ru-RU" : "en-GB";
   const messages = view?.messages ?? [];
   const hasView = !!view;
   const viewExpires = view?.expires;
-  const lock = useCallback(() => {
-    generation.current++; clientRef.current?.close(); clientRef.current = null;
-    setView(null); setDraft(""); setEmojiOpen(false); setInviteLink(""); setShowInvite(false); setConnected(false);
+  const release = useCallback(() => {
+    generation.current++; clientRef.current?.detach(); clientRef.current = null;
+    setView(null); setDraft(""); setReplyTo(undefined); setInviteLink(""); setShowInvite(false); setConnected(false); setMirrored(false);
   }, []);
+  const lock = useCallback(() => { clientRef.current?.close(); release(); }, [release]);
+  useEffect(() => {
+    if (!invitation) return;
+    if (clientRef.current) {
+      const active = clientRef.current.invitation;
+      const same = active.room === invitation.room && active.secret === invitation.secret && active.founder === invitation.founder && active.expires === invitation.expires;
+      const timer = setTimeout(() => {
+        if (!same) setError("Another conversation is open in this tab. End it before opening a different invitation.");
+        onInvitationConsumed();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setResuming(true);
+      try {
+        const { resumeChatSession } = await import("@/lib/secure-chat-session");
+        const session = await resumeChatSession(invitation);
+        if (cancelled) { session?.detach(); return; }
+        if (session) {
+          clientRef.current = session; setMirrored(true); setView(session.view); setInviteLink(invitationLink(location.origin, session.invitation));
+          setConnected(true); setError(""); onInvitationConsumed();
+        }
+      } catch (error) {
+        if (!cancelled) setError(error instanceof Error ? error.message : "Connection interrupted.");
+      } finally { if (!cancelled) setResuming(false); }
+    }, 0);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [invitation, onInvitationConsumed]);
   useEffect(() => {
     let alive = true, timer = 0;
     const lifecycle = generation;
@@ -87,10 +118,10 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
       if (alive) timer = window.setTimeout(poll, 2000);
     };
     const timerStart = window.setTimeout(poll, 100);
-    const pagehide = () => lock();
+    const pagehide = () => release();
     window.addEventListener("pagehide", pagehide);
-    return () => { alive = false; clearTimeout(timer); clearTimeout(timerStart); window.removeEventListener("pagehide", pagehide); lifecycle.current++; clientRef.current?.close(); clientRef.current = null; };
-  }, [lock]);
+    return () => { alive = false; clearTimeout(timer); clearTimeout(timerStart); window.removeEventListener("pagehide", pagehide); lifecycle.current++; clientRef.current?.detach(); clientRef.current = null; };
+  }, [lock, release]);
   useEffect(() => {
     if (!viewExpires) return;
     const expires = viewExpires;
@@ -102,9 +133,10 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
   const connect = async (nickname: string, name: string) => {
     const current = ++generation.current;
     const { SecureChatClient } = await import("@/lib/secure-chat-client");
-    const client = await SecureChatClient.connect(nickname, name, invitation, location.origin);
-    if (generation.current !== current) { client.close(); return; }
-    clientRef.current = client;
+    const { ownChatSession, resumeChatSession } = await import("@/lib/secure-chat-session");
+    const client = invitation && await resumeChatSession(invitation) || ownChatSession(await SecureChatClient.connect(nickname, name, invitation, location.origin));
+    if (generation.current !== current) { client.detach(); return; }
+    clientRef.current = client; setMirrored(client.mirrored);
     setView(client.view); setInviteLink(invitationLink(location.origin, client.invitation));
     setConnected(true); setError(""); onInvitationConsumed();
   };
@@ -112,7 +144,7 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
     event.preventDefault(); const client = clientRef.current;
     if (!client || !draft.trim() || busy) return;
     setBusy(true); setError("");
-    try { await client.send(draft); if (clientRef.current === client) { setDraft(""); setView(client.view); setConnected(true); nearBottom.current = true; } }
+    try { await client.send(draft, replyTo); if (clientRef.current === client) { setDraft(""); setReplyTo(undefined); setView(client.view); setConnected(true); nearBottom.current = true; } }
     catch (error) { if (clientRef.current === client) { if (client.closed) lock(); setError(error instanceof Error ? error.message : "Could not send."); } }
     finally { setBusy(false); }
   };
@@ -124,25 +156,13 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
     observer.observe(container);
     return () => observer.disconnect();
   }, [hasView]);
-  useEffect(() => {
-    if (!emojiOpen) return;
-    const panel = emojiRef.current;
-    panel?.querySelector<HTMLButtonElement>("button")?.focus();
-    const outside = (event: PointerEvent) => {
-      if (event.target instanceof Node && !panel?.contains(event.target) && !emojiButtonRef.current?.contains(event.target)) setEmojiOpen(false);
-    };
-    document.addEventListener("pointerdown", outside);
-    const animation = panel && !matchMedia("(prefers-reduced-motion: reduce)").matches ? animate(panel, { opacity: [0, 1], translateY: [8, 0], duration: 180, ease: "out(3)" }) : undefined;
-    return () => { document.removeEventListener("pointerdown", outside); animation?.cancel(); };
-  }, [emojiOpen]);
-
-  const insertEmoji = (emoji: string) => {
-    const { start, end } = selection.current;
-    const value = draft.slice(0, start) + emoji + draft.slice(end);
-    if (value.length > maxMessageLength) return;
-    const cursor = start + emoji.length;
-    setDraft(value); setEmojiOpen(false);
-    requestAnimationFrame(() => { composerRef.current?.focus(); composerRef.current?.setSelectionRange(cursor, cursor); selection.current = { start: cursor, end: cursor }; });
+  const react = async (target: MessageReference, emoji: Reaction | null) => {
+    const client = clientRef.current;
+    if (!client || busy) return;
+    setBusy(true); setError("");
+    try { await client.react(target, emoji); if (clientRef.current === client) setView(client.view); }
+    catch (error) { if (clientRef.current === client) { if (client.closed) lock(); setError(error instanceof Error ? error.message : "Could not send."); } }
+    finally { setBusy(false); }
   };
 
   useEffect(() => {
@@ -157,31 +177,23 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
   }, [lastMessage]);
 
   return <div className={`chat-workspace chat-single-conversation${!view ? " is-starting" : ""}${showGuide ? " has-guide" : ""}`}>
-    <section className="chat-conversation" aria-label={roomName}>
-      <header className="chat-room-header"><div><h3><span aria-hidden="true">#</span> {roomName}</h3><p>{view ? `${view?.members.length ?? 0} ${view?.members.length === 1 ? "participant" : "participants"} · ${connected ? "encrypted connection" : "reconnecting…"}` : "No account. Private. Anonymous."}</p></div><div className="chat-room-tools"><button className="chat-button chat-guide-toggle" type="button" aria-expanded={showGuide} aria-controls="chat-guide-panel" onClick={() => setShowGuide(current => !current)}>How it works <span aria-hidden="true">{showGuide ? "−" : "+"}</span></button></div></header>
-      {!view ? <div className="chat-gate-scroll">{invitation && <div className="chat-invitation-banner"><strong>Private invitation.</strong><p>Create a key to join this room.</p></div>}{error && <p className="chat-error" role="alert">{error}</p>}<IdentityGate onConnect={connect} invited={!!invitation} /></div> : <>
-        <div className="chat-room-notice chat-pinned-invite"><div><strong>24 HOURS. THEN GONE.</strong><small>Ends {new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(view!.expires))} · no recovery</small></div><button type="button" className="chat-button" aria-expanded={showInvite} onClick={() => setShowInvite(current => !current)}>Invite friends {showInvite ? "−" : "↗"}</button></div>
+    <section className="chat-conversation" aria-label={roomName} lang={language}>
+      <header className="chat-room-header"><div><h3><span aria-hidden="true">#</span> {roomName}</h3><p>{view ? `${count} ${participantLabel} · ${connected ? t("encrypted connection", "зашифрованное соединение") : t("reconnecting…", "восстанавливаем связь…")}` : t("No account. Private. Anonymous.", "Без аккаунта. Приватно. Анонимно.")}</p></div><div className="chat-room-tools"><button className="chat-button chat-guide-toggle" type="button" aria-expanded={showGuide} aria-controls="chat-guide-panel" onClick={() => setShowGuide(current => !current)}>{t("How it works", "Как это работает")} <span aria-hidden="true">{showGuide ? "−" : "+"}</span></button></div></header>
+      {!view ? <div className="chat-gate-scroll">{invitation && <div className="chat-invitation-banner"><strong>{t("Private invitation.", "Приватное приглашение.")}</strong><p>{t("Create a key to join this room.", "Создайте ключ, чтобы войти в беседу.")}</p></div>}{error && <p className="chat-error" role="alert">{chatError(error, language)}</p>}{resuming ? <p className="chat-loading" role="status">{t("Looking for your open session…", "Ищем вашу открытую сессию…")}</p> : <IdentityGate onConnect={connect} invited={!!invitation} />}</div> : <>
+        <div className="chat-room-notice chat-pinned-invite"><div><strong>{t("24 HOURS. THEN GONE.", "24 ЧАСА. ПОТОМ ВСЁ ИСЧЕЗНЕТ.")}</strong><small>{t("Ends", "До")} {new Intl.DateTimeFormat(dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(view!.expires))} · {t("no recovery", "без восстановления")}</small></div><button type="button" className="chat-button" aria-expanded={showInvite} onClick={() => setShowInvite(current => !current)}>{t("Invite friends", "Пригласить друзей")} {showInvite ? "−" : "↗"}</button></div>
         {showInvite && <div className="chat-invite-scroll"><ChatInviteLink link={inviteLink} /></div>}
-        <details className="chat-recipients"><summary>Participant keys <span>{view.members.length} / epoch {view.epoch}</span></summary><div><p>Compare full fingerprints with your friends. Matching conversation codes confirm the same MLS transcript.</p>{view.members.map(member => <div className="chat-recipient" key={member.id}><strong>{member.nickname}{member.id === view.identity.id ? " (you)" : ""}</strong><code>{prettyFingerprint(member.id)}</code></div>)}{view.ready && <div className="chat-recipient"><strong>Conversation code</strong><code>{prettyFingerprint(view.verification)}</code></div>}</div></details>
-        <div className="chat-messages" ref={messagesRef} role="log" aria-label="Encrypted messages" aria-live="polite" aria-relevant="additions" onScroll={event => { const target = event.currentTarget; nearBottom.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80; }}>
-          {!messages.length && <div className="chat-empty"><span className="chat-empty-symbol" aria-hidden="true">[ … ]</span><p className="chat-eyebrow">ENCRYPTED CHANNEL</p><h3>{view.ready ? "No messages yet." : "Connecting your keys…"}</h3><small>{view.ready ? "Share the invitation. Your friends join with their own keys." : "Keep this tab open. An existing participant will connect you automatically."}</small></div>}
+        <details className="chat-recipients"><summary>{t("Participant keys", "Ключи участников")} <span>{view.members.length} / epoch {view.epoch}</span></summary><div><p>{t("Compare full fingerprints with your friends. Matching conversation codes confirm the same MLS transcript.", "Сверьте полные fingerprint с друзьями. Совпадение кодов беседы подтверждает одинаковый MLS transcript.")}</p>{view.members.map(member => <div className="chat-recipient" key={member.id}><strong>{member.nickname}{member.id === view.identity.id ? t(" (you)", " (вы)") : ""}</strong><code>{prettyFingerprint(member.id)}</code></div>)}{view.ready && <div className="chat-recipient"><strong>{t("Conversation code", "Код беседы")}</strong><code>{prettyFingerprint(view.verification)}</code></div>}</div></details>
+        <div className="chat-messages" ref={messagesRef} role="log" aria-label={t("Encrypted messages", "Зашифрованные сообщения")} aria-live="polite" aria-relevant="additions" onScroll={event => { const target = event.currentTarget; nearBottom.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80; }}>
+          {!messages.length && <div className="chat-empty"><span className="chat-empty-symbol" aria-hidden="true">[ … ]</span><p className="chat-eyebrow">{t("ENCRYPTED CHANNEL", "ЗАШИФРОВАННЫЙ ЧАТ")}</p><h3>{view.ready ? t("No messages yet.", "Сообщений пока нет.") : t("Connecting your keys…", "Подключаем ваши ключи…")}</h3><small>{view.ready ? t("Share the invitation. Your friends join with their own keys.", "Отправьте ссылку друзьям. Они войдут со своими ключами.") : t("Keep this tab open. An existing participant will connect you automatically.", "Оставьте вкладку открытой. Участник онлайн подключит вас автоматически.")}</small></div>}
           {messages.map((message, index) => {
             const own = message.sender === view.identity.id;
             const grouped = index > 0 && messages[index - 1].sender === message.sender && Date.parse(message.time) - Date.parse(messages[index - 1].time) < 5 * 60_000;
-            const emojiOnly = /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\s)+$/u.test(message.body) && [...message.body].length <= 24;
-            return <article key={message.id} className={`chat-message-row${own ? " is-own" : ""}${grouped ? " is-grouped" : ""}`}>
-              <span className="chat-message-avatar" aria-hidden="true">{message.nickname.slice(0, 2).toUpperCase()}</span>
-              <div className="chat-message"><header><strong title={prettyFingerprint(message.sender)}>{own ? "You" : message.nickname}</strong><span className="chat-message-key-id" title={prettyFingerprint(message.sender)}>{message.sender.slice(-8).toUpperCase()}</span></header><p className={emojiOnly ? "chat-emoji-message" : undefined}>{message.body}</p><footer><small>{"✓ Signature checked"}</small><time dateTime={message.time}>{new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(message.time))}</time></footer></div>
-            </article>;
+            const target = { id: message.id, sender: message.sender };
+            return <ChatMessage key={message.id} message={message} original={message.replyTo ? findMessage(messages, message.replyTo) : undefined} own={own} grouped={grouped} identity={view.identity.id} busy={busy || !connected} onReply={() => setReplyTo(target)} onReact={emoji => void react(target, emoji)} />;
           })}
         </div>
-        <form className="chat-composer" onSubmit={send}>
-          {emojiOpen && <div className="chat-emoji-picker" ref={emojiRef} role="dialog" aria-label="Choose an emoji" onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setEmojiOpen(false); emojiButtonRef.current?.focus(); } }}><header><span>EMOJI</span><button type="button" className="chat-text-button" aria-label="Close emoji picker" onClick={() => { setEmojiOpen(false); emojiButtonRef.current?.focus(); }}>×</button></header>{emojiGroups.map(group => <div key={group.name}><p>{group.name}</p><div className="chat-emoji-grid">{group.emoji.map(emoji => <button key={emoji} type="button" aria-label={`Insert ${emoji}`} onClick={() => insertEmoji(emoji)}>{emoji}</button>)}</div></div>)}</div>}
-          {error && <p className="chat-error" role="alert">{error}</p>}
-          <label className="chat-sr-only" htmlFor="chat-message">Message to {roomName}</label>
-          <div className="chat-compose-row"><button className="chat-emoji-trigger" type="button" ref={emojiButtonRef} aria-label="Choose emoji" aria-expanded={emojiOpen} disabled={!view?.ready || busy} onClick={() => { const input = composerRef.current; if (input) selection.current = { start: input.selectionStart, end: input.selectionEnd }; setEmojiOpen(current => !current); }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M8 14c1 4 7 4 8 0M8 9h1m6 0h1" /></svg></button><textarea id="chat-message" ref={composerRef} value={draft} onChange={event => setDraft(event.target.value)} onSelect={event => { selection.current = { start: event.currentTarget.selectionStart, end: event.currentTarget.selectionEnd }; }} rows={2} maxLength={maxMessageLength} disabled={!view?.ready || busy} placeholder={!view?.ready ? "Waiting for an online participant…" : "Message…"} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} /><button className="chat-button chat-primary" type="submit" disabled={!view?.ready || !connected || !draft.trim() || busy} aria-label="Encrypt and send message">{busy ? "…" : "SEND ↑"}</button></div>
-          <div className="chat-composer-foot"><span><span className="chat-compose-privacy">↳ ENCRYPTED IN YOUR BROWSER · </span>{draft.length}/{maxMessageLength}</span><span className="chat-current-alias" title={prettyFingerprint(view.identity.id)}>{view.identity.nickname} · {view.identity.id.slice(-8).toUpperCase()}</span><button type="button" className="chat-text-button" onClick={lock}>End session</button></div>
-        </form>
+        {mirrored && <p className="chat-session-mirror" role="status">{t("Connected through your original tab. Keep it open.", "Подключено через исходную вкладку. Оставьте её открытой.")}</p>}
+        <ChatComposer draft={draft} setDraft={setDraft} reply={replyTo ? findMessage(messages, replyTo) : undefined} onCancelReply={() => setReplyTo(undefined)} onSend={send} onEnd={lock} identity={view.identity} ready={view.ready} connected={connected} busy={busy} error={error} />
       </>}
     </section>
     {showGuide && <aside id="chat-guide-panel" className="chat-guide-panel"><ChatGuide /></aside>}

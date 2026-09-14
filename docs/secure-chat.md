@@ -40,6 +40,14 @@ The relay runs separately with no site files, secrets, persistent volume, publis
 
 Tor Browser can open the dedicated v3 onion service. It uses the same server and the Tor network; no second rented relay or exit node is needed. A separate restricted Tor service forwards only to a loopback chat gateway. The onion route exposes the chat, security page and required static assets, not the site’s other APIs. The Tor service identity persists so the public address stays stable; it contains no chat history. HTTPS and onion hosts are explicitly allowlisted, with same-origin checks on each.
 
+## Replies and reactions
+
+Replies carry only the original message ID and author fingerprint. The quote is resolved from already verified local history; no quoted plaintext is resent. Reactions are explicit set/remove operations, with one of six supported emoji per participant per message. An interaction-v1 signature binds the operation, target, emoji, text, sender, message ID, epoch, conversation and deadline. The whole envelope is MLS-encrypted; the relay receives no reply or reaction fields. Unknown reaction targets are discarded without a pending queue. Older clients show signed fallback text for reactions and ordinary text for replies.
+
+## Returning to a live session
+
+Opening the same invitation in another tab of the same browser profile and origin can reuse the open session through BroadcastChannel. Its channel name is derived from the complete invitation. Only the original tab holds private keys and the relay token; other tabs exchange commands and readable UI state locally. All sends use the original client’s serialized MLS queue. Hiding the landing-page chat keeps it alive; End session ends all attached views. Closing an attached view leaves the original intact. Closing or reloading the original tab destroys its keys; this is not persistent recovery. Same-origin website code and the browser remain trusted, and another person using the same browser profile can access its live session. A suspended original tab may delay reconnection.
+
 ## Conditions and limits
 
 ### Forward secrecy has specific conditions
@@ -52,7 +60,7 @@ A compromised website, extension, browser or device can steal plaintext and live
 
 ### An invitation grants access
 
-Anyone with the full link can join while a participant is online and capacity remains. There is no revocation, moderation or recovery backdoor. Closing a tab does not revoke a copied invitation. If every participant loses their keys, the existing conversation cannot be reconstructed by the server. A returning user creates a new temporary identity.
+Anyone with the full link can join while a participant is online and capacity remains. There is no revocation, moderation or recovery backdoor. Closing a tab does not revoke a copied invitation. If every participant loses their keys, the existing conversation cannot be reconstructed by the server. After losing the original tab’s keys, a returning user creates a new temporary identity.
 
 ### Deletion is bounded by the endpoints
 

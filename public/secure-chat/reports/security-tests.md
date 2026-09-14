@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T14:20:53.805Z
+Generated: 2026-09-14T15:40:44.927Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**62 checks; PASSED. Technical self-review, not an independent audit.**
+**77 checks; PASSED. Technical self-review, not an independent audit.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -67,6 +67,21 @@ Exit: 0. [Raw TAP output](integration.tap).
 - PASS — closing during asynchronous key refresh cannot resurrect a cryptographic session
 - PASS — sixteen real MLS participants fit the relay packet budgets and exchange text
 - PASS — only the configured v3 onion authority is allowed, with exact same-origin POST
+- PASS — encrypted replies bind the exact original author and message
+- PASS — reactions set, replace and remove only the authenticated participant's reaction
+- PASS — identical reaction operations and a lost acknowledgement are idempotent
+- PASS — new guests see reply references without receiving the earlier message or its reactions
+- PASS — invalid drafts and forged or unavailable targets do not consume a lease or close the session
+- PASS — message views do not expose mutable internal reply or reaction state
+- PASS — reply and reaction metadata never enter relay request fields or stored plaintext
+- PASS — receiver rejects unsigned, altered and oversized interactions from an admitted peer
+- PASS — interaction projection has bounded history and no queue for missing targets
+- PASS — returning through the invitation reuses the live browser identity without a relay login
+- PASS — owner and mirrored tabs serialize sends and reactions through one MLS client
+- PASS — closing a mirrored view leaves the original session and keys active
+- PASS — explicit End session in a mirror destroys the owner's keys and closes other views
+- PASS — an altered invitation cannot discover a live browser session
+- PASS — owner shutdown invalidates mirrored views and cannot be resumed from stale state
 
 ## MLS retention and compromise scenarios (laboratory fixtures)
 

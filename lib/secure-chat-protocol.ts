@@ -14,7 +14,11 @@ export type RelayEvent = { seq: number; id: string; sender: string; wire: string
 export type PendingJoin = { id: string; sealed: string };
 export type RelaySnapshot = { expires: number; manifest: string; seq: number; events: RelayEvent[]; pending: PendingJoin[]; rejected?: string; welcome?: { sealed: string; seq: number }; ready: boolean };
 export type Profile = { id: string; nickname: string; key: string; signature: string };
-export type ReadableMessage = { id: string; sender: string; nickname: string; body: string; time: string };
+export const REACTIONS = ["👍", "❤️", "😂", "🔥", "👀", "🎉"] as const;
+export type Reaction = typeof REACTIONS[number];
+export type MessageReference = { id: string; sender: string };
+export type MessageInteraction = { kind: "reply"; target: MessageReference } | { kind: "reaction"; target: MessageReference; emoji: Reaction | null };
+export type ReadableMessage = { id: string; sender: string; nickname: string; body: string; time: string; replyTo?: MessageReference; reactions: { sender: string; emoji: Reaction }[] };
 export type ChatView = { ready: boolean; name: string; expires: number; members: Profile[]; messages: ReadableMessage[]; identity: Profile; epoch: string; verification: string };
 export function canonical(...fields: unknown[]) { return JSON.stringify([PROTOCOL, ...fields]); }
 export function loginText(id: string, origin: string, expires: number, request: LoginRequest, capabilityHash: string) {

@@ -8,7 +8,8 @@ import { applyProposals } from "ts-mls/clientState.js";
 import { toLeafIndex } from "ts-mls/treemath.js";
 import { authenticatedApplication, currentEpochState } from "./secure-chat-mls-adapter.ts";
 import { sha256 } from "@noble/hashes/sha2.js";
-import { canonical, CHAT_TTL, MAX_MEMBERS, MAX_TEXT, nicknamePattern, hexPattern, idPattern, type ChatInvitation, type Profile } from "./secure-chat-protocol.ts";
+import { canonical, CHAT_TTL, MAX_MEMBERS, nicknamePattern, hexPattern, idPattern, type ChatInvitation, type Profile, type MessageInteraction } from "./secure-chat-protocol.ts";
+import { interactionFields, reactionFallback, validInteraction, validMessageText } from "./secure-chat-interactions.ts";
 
 export const SUITE = "MLS_128_DHKEMX25519_AES128GCM_SHA256_Ed25519";
 export const utf8 = (value: string) => new TextEncoder().encode(value);
@@ -77,7 +78,7 @@ type JoinRequest = { id: string; profile: Profile; keyPackage: string; signature
 type Admission = { member: string; by: string; signature: string };
 type Roster = { profiles: Profile[]; admissions: Admission[] };
 type WelcomeBundle = Roster & { id: string; requestHash: string; welcome: string; signer: string; signature: string };
-type SignedText = { id: string; sender: string; body: string; epoch: string; signature: string };
+type SignedText = { id: string; sender: string; body: string; epoch: string; signature: string; interaction?: MessageInteraction; interactionSignature?: string };
 type Manifest = { name: string; signature: string };
 export type PreparedPacket = { wire: string; bootstrap?: string; welcome?: string; commit: boolean };
 
@@ -242,10 +243,18 @@ export class MlsConversation {
       const wire = b64(encodeMlsMessage(result.commit)); this.installCandidate(working, result); return { wire, commit: true };
     } finally { wipe(working); }
   }
-  async prepareText(id: string, body: string): Promise<PreparedPacket> {
+  async prepareText(id: string, body: string, interaction?: MessageInteraction): Promise<PreparedPacket> {
     this.check(); if (this.#candidate) throw new Error("A packet is awaiting acknowledgement.");
-    if (!idPattern.test(id) || typeof body !== "string" || !body.trim() || body.length > MAX_TEXT || /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(body)) throw new Error("Invalid message text.");
-    const payload = { id, sender: this.identity.id, body, epoch: this.epoch, signature: await this.sign("text", id, this.identity.id, body, this.epoch) };
+    if (!idPattern.test(id) || !validMessageText(body)) throw new Error("Invalid message text.");
+    if (interaction !== undefined && (!validInteraction(interaction) || interaction.target.id === id || interaction.kind === "reaction" && body !== reactionFallback(interaction.emoji))) throw new Error("Invalid message interaction.");
+    interaction = interaction ? structuredClone(interaction) : undefined;
+    const payload: SignedText = { id, sender: this.identity.id, body, epoch: this.epoch, signature: await this.sign("text", id, this.identity.id, body, this.epoch) };
+    // Keep the original signed text for older clients. New clients additionally
+    // authenticate all interaction fields; the entire envelope is MLS-encrypted.
+    if (interaction) {
+      payload.interaction = structuredClone(interaction);
+      payload.interactionSignature = await this.sign("interaction-v1", id, this.identity.id, body, this.epoch, ...interactionFields(payload.interaction));
+    }
     const working = clone(this.#state!), plaintext = utf8(JSON.stringify(payload));
     try {
       const result = await createApplicationMessage(working, plaintext, this.#suite);
@@ -283,8 +292,12 @@ export class MlsConversation {
         try { message = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(result.message)) as SignedText; }
         finally { result.message.fill(0); }
         const profile = this.#profiles.get(message.sender);
-        if (!profile || profile.key !== authenticatedSender || message.epoch !== this.epoch || message.id !== id || typeof message.body !== "string" || !message.body.trim() || message.body.length > MAX_TEXT) throw new Error("Message identity or context mismatch.");
+        if (!profile || profile.key !== authenticatedSender || message.epoch !== this.epoch || message.id !== id || !validMessageText(message.body)) throw new Error("Message identity or context mismatch.");
         await this.verify(profile.key, message.signature, "text", id, message.sender, message.body, message.epoch);
+        if (message.interaction !== undefined) {
+          if (!validInteraction(message.interaction) || message.interaction.target.id === id || message.interaction.kind === "reaction" && message.body !== reactionFallback(message.interaction.emoji)) throw new Error("Invalid message interaction.");
+          await this.verify(profile.key, message.interactionSignature!, "interaction-v1", id, message.sender, message.body, message.epoch, ...interactionFields(message.interaction));
+        } else if (message.interactionSignature !== undefined) throw new Error("Missing signed interaction.");
         if (bootstrap) throw new Error("Unexpected roster on application message.");
       } else if (result.actionTaken !== "accept") throw new Error("Unsupported MLS operation.");
       const { profiles, admissions } = bootstrap ? await unseal<Roster>(this.invitation, "roster", bootstrap) : { profiles: this.profiles, admissions: [...this.#admissions.values()] };

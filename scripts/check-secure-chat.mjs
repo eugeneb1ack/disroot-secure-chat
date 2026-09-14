@@ -38,10 +38,18 @@ try {
   assert.equal(a.view.ready && b.view.ready, true); results.push("HTTP challenge, authentication, encrypted admission, creator retained");
   await a.send("Release check: Привет 🙂"); await b.poll(); assert.equal(b.view.messages.at(-1).body, "Release check: Привет 🙂");
   await b.send("Return path 👩🏽‍💻"); await a.poll(); assert.equal(a.view.messages.at(-1).body, "Return path 👩🏽‍💻"); results.push("Bidirectional MLS text and emoji");
+  const target = { id: a.view.messages[0].id, sender: a.view.messages[0].sender };
+  await b.send("Encrypted reply", target); await a.poll(); assert.deepEqual(a.view.messages.at(-1).replyTo, target);
+  await b.react(target, "🔥"); await a.poll(); assert.deepEqual(a.view.messages[0].reactions, [{ sender: b.view.identity.id, emoji: "🔥" }]);
+  await b.react(target, null); await a.poll(); assert.deepEqual(a.view.messages[0].reactions, []);
+  results.push("Authenticated encrypted reply, reaction and reaction removal");
   const c = await SecureChatClient.connect("CheckCharlie", "", a.invitation, origin, transport); clients.push(c);
   await b.poll(); await a.poll(); await c.poll(); await b.poll(); await a.poll();
   assert.equal(c.view.messages.length, 0); await c.send("Three participants"); await a.poll(); await b.poll();
   assert.equal(a.view.messages.at(-1).body, "Three participants"); results.push("Non-founder admission, third client, no pre-join history");
+  await b.send("Reply after admission", target); await a.poll(); await c.poll();
+  assert.deepEqual(c.view.messages.at(-1).replyTo, target); assert.equal(c.view.messages.some(message => message.id === target.id), false);
+  results.push("Replies do not disclose pre-join message content to a new guest");
   const denied = await request("/api/secure-chat", { action: "challenge" }, undefined, "https://invalid.example");
   assert.equal(denied.status, 403); results.push("Cross-origin rejection and no-store API responses");
   console.log(JSON.stringify({ passed: true, checkedAt: new Date().toISOString(), origin, checks: results }, null, 2));

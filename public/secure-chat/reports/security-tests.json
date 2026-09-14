@@ -1,27 +1,29 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T14:20:53.805Z",
+  "generatedAt": "2026-09-14T15:40:44.927Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
   "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "c9629599e6b808a632684bead8d5540bc24bf0f1",
+  "gitHead": "24586a0ff88c660b8597589f47446194c7a8403a",
   "sourceSha256": {
-    "lib/secure-chat-protocol.ts": "17e2b49cad8262f68307f56c136b55833ce17e9c1ee48ab49395850db74b5261",
+    "lib/secure-chat-protocol.ts": "b6f493683ac64fe082bebae4f723bfe51b0317f271453df57c2cdfdd295adca0",
     "lib/secure-chat-invite.ts": "d446fe4d2c98b924313f5bce3f98975a7b05abb35306239851f2bc66244d7c3c",
-    "lib/secure-chat-mls.ts": "463f26c1d170382adc9183b6a454a83915bd51538b0f03bc6d8378cde29aee1a",
+    "lib/secure-chat-mls.ts": "7cf816e094051e08f5f7e62a66b2375b0cdfd43702bc740ac02152dbbd6c2ba3",
     "lib/secure-chat-mls-adapter.ts": "32545ce180774d80daf5aaf112ed554dbdc9a0b99b3736abd4e9d94c0572c46b",
-    "lib/secure-chat-client.ts": "3d2685246bfe39886fe4943a5088e6fbaadb06a3467a134091c9360b2b22936d",
+    "lib/secure-chat-client.ts": "63bd9378e809bab9bda07767f25f34c4fd9941e5dd8754271f61debced34aaef",
     "lib/secure-chat-store.ts": "8b39e94fef8df0ec944c0e69b49bb145351a3fde0491a258ebf3cc1fc2bc8b9c",
     "lib/secure-chat-handler.ts": "ba989b31d21e67d0d20a80031c5cc30fe7b7a56625d43c027f7a2ef9414d5b6d",
     "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
     "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
     "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
-    "lib/secure-chat-v2.test.mjs": "913a011cc24636ce49b6ce192fce279e1d08844a23f97db8e85fff398cb731f7",
+    "lib/secure-chat-v2.test.mjs": "e1206ca8be6b3f9729884e6b2f514727cd9abc327be9a9ea1e011897f5e06643",
     "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
-    "package-lock.json": "dff6b582344010d2207e57c8d67781ff16fadc6d6e519a460cac48e6a9d332dd"
+    "package-lock.json": "dff6b582344010d2207e57c8d67781ff16fadc6d6e519a460cac48e6a9d332dd",
+    "lib/secure-chat-interactions.ts": "dedb9a21a8b81af84ed96def3100d1c44156de87ca048bc53026dcabaf48d213",
+    "lib/secure-chat-session.ts": "6165379ced5da342882bce2531b248e3e4fff01cd12be0ee4ae5ca1a65fdf466"
   },
   "passed": true,
-  "total": 62,
+  "total": 77,
   "results": [
     {
       "suite": "Production integration and hostile inputs",
@@ -239,6 +241,66 @@
         },
         {
           "name": "only the configured v3 onion authority is allowed, with exact same-origin POST",
+          "passed": true
+        },
+        {
+          "name": "encrypted replies bind the exact original author and message",
+          "passed": true
+        },
+        {
+          "name": "reactions set, replace and remove only the authenticated participant's reaction",
+          "passed": true
+        },
+        {
+          "name": "identical reaction operations and a lost acknowledgement are idempotent",
+          "passed": true
+        },
+        {
+          "name": "new guests see reply references without receiving the earlier message or its reactions",
+          "passed": true
+        },
+        {
+          "name": "invalid drafts and forged or unavailable targets do not consume a lease or close the session",
+          "passed": true
+        },
+        {
+          "name": "message views do not expose mutable internal reply or reaction state",
+          "passed": true
+        },
+        {
+          "name": "reply and reaction metadata never enter relay request fields or stored plaintext",
+          "passed": true
+        },
+        {
+          "name": "receiver rejects unsigned, altered and oversized interactions from an admitted peer",
+          "passed": true
+        },
+        {
+          "name": "interaction projection has bounded history and no queue for missing targets",
+          "passed": true
+        },
+        {
+          "name": "returning through the invitation reuses the live browser identity without a relay login",
+          "passed": true
+        },
+        {
+          "name": "owner and mirrored tabs serialize sends and reactions through one MLS client",
+          "passed": true
+        },
+        {
+          "name": "closing a mirrored view leaves the original session and keys active",
+          "passed": true
+        },
+        {
+          "name": "explicit End session in a mirror destroys the owner's keys and closes other views",
+          "passed": true
+        },
+        {
+          "name": "an altered invitation cannot discover a live browser session",
+          "passed": true
+        },
+        {
+          "name": "owner shutdown invalidates mirrored views and cannot be resumed from stale state",
           "passed": true
         }
       ],

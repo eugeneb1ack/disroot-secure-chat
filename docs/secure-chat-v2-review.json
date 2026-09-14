@@ -45,6 +45,16 @@
         "09",
         "Optional Tor route",
         "Tor Browser can open the dedicated v3 onion service. It uses the same server and the Tor network; no second rented relay or exit node is needed. A separate restricted Tor service forwards only to a loopback chat gateway. The onion route exposes the chat, security page and required static assets, not the site’s other APIs. The Tor service identity persists so the public address stays stable; it contains no chat history. HTTPS and onion hosts are explicitly allowlisted, with same-origin checks on each."
+      ],
+      [
+        "10",
+        "Replies and reactions",
+        "Replies carry only the original message ID and author fingerprint. The quote is resolved from already verified local history; no quoted plaintext is resent. Reactions are explicit set/remove operations, with one of six supported emoji per participant per message. An interaction-v1 signature binds the operation, target, emoji, text, sender, message ID, epoch, conversation and deadline. The whole envelope is MLS-encrypted; the relay receives no reply or reaction fields. Unknown reaction targets are discarded without a pending queue. Older clients show signed fallback text for reactions and ordinary text for replies."
+      ],
+      [
+        "11",
+        "Returning to a live session",
+        "Opening the same invitation in another tab of the same browser profile and origin can reuse the open session through BroadcastChannel. Its channel name is derived from the complete invitation. Only the original tab holds private keys and the relay token; other tabs exchange commands and readable UI state locally. All sends use the original client’s serialized MLS queue. Hiding the landing-page chat keeps it alive; End session ends all attached views. Closing an attached view leaves the original intact. Closing or reloading the original tab destroys its keys; this is not persistent recovery. Same-origin website code and the browser remain trusted, and another person using the same browser profile can access its live session. A suspended original tab may delay reconnection."
       ]
     ],
     "limits": [
@@ -58,7 +68,7 @@
       ],
       [
         "An invitation grants access",
-        "Anyone with the full link can join while a participant is online and capacity remains. There is no revocation, moderation or recovery backdoor. Closing a tab does not revoke a copied invitation. If every participant loses their keys, the existing conversation cannot be reconstructed by the server. A returning user creates a new temporary identity."
+        "Anyone with the full link can join while a participant is online and capacity remains. There is no revocation, moderation or recovery backdoor. Closing a tab does not revoke a copied invitation. If every participant loses their keys, the existing conversation cannot be reconstructed by the server. After losing the original tab’s keys, a returning user creates a new temporary identity."
       ],
       [
         "Deletion is bounded by the endpoints",
@@ -120,6 +130,16 @@
         "09",
         "Отдельный вход через Tor",
         "В Tor Browser можно открыть отдельный v3 onion-адрес. Используются тот же сервер и сеть Tor; второй арендованный узел и выходной узел не нужны. Ограниченный Tor-сервис передаёт запросы только локальному шлюзу чата. Onion-маршрут открывает чат, security и необходимые статические ресурсы, но не остальные API сайта. Ключ самого onion-сервиса хранится постоянно для стабильного адреса и не содержит переписки. HTTPS- и onion-адреса разрешаются явно, с отдельной проверкой Origin."
+      ],
+      [
+        "10",
+        "Ответы и реакции",
+        "Ответ содержит только ID исходного сообщения и fingerprint его автора. Цитата берётся из уже проверенной локальной истории: её текст не отправляется заново. Реакция явно устанавливается или удаляется; у участника одна из шести доступных реакций на сообщение. Подпись interaction-v1 связывает операцию, исходное сообщение, эмодзи, текст, отправителя, ID события, epoch, беседу и срок. Весь пакет шифруется MLS; relay не получает открытых полей ответа или реакции. Реакции на неизвестные сообщения отбрасываются без очереди. Старые клиенты показывают текстовое описание реакции и обычный текст ответа."
+      ],
+      [
+        "11",
+        "Возврат в открытую сессию",
+        "Та же ссылка в другой вкладке того же профиля браузера и origin может подключить уже открытую сессию через BroadcastChannel. Имя канала вычисляется из полного приглашения. Приватные ключи и токен relay остаются только в исходной вкладке; другие вкладки локально обмениваются с ней командами и состоянием интерфейса с открытым текстом. Все отправки проходят через одну очередь MLS исходного клиента. Сворачивание чата на главной сохраняет сессию; «Завершить сессию» закрывает все подключённые представления. Закрытие дополнительной вкладки не завершает исходную. Закрытие или перезагрузка исходной вкладки уничтожает её ключи: постоянного восстановления нет. Код того же origin и браузер остаются точками доверия; другой человек с тем же профилем браузера может открыть его живую сессию. Приостановленная исходная вкладка может задержать подключение."
       ]
     ],
     "limits": [
@@ -133,7 +153,7 @@
       ],
       [
         "Ссылка даёт доступ",
-        "Любой обладатель полной ссылки может войти, пока участник онлайн и есть место. Отзыва доступа, модерации и служебного восстановления нет. Закрытие вкладки не отзывает скопированное приглашение. Если все потеряли ключи, сервер не восстановит беседу. Вернувшийся пользователь создаёт новую временную личность."
+        "Любой обладатель полной ссылки может войти, пока участник онлайн и есть место. Отзыва доступа, модерации и служебного восстановления нет. Закрытие вкладки не отзывает скопированное приглашение. Если все потеряли ключи, сервер не восстановит беседу. После утраты ключей исходной вкладки вернувшийся пользователь создаёт новую временную личность."
       ],
       [
         "Удаление ограничено участниками системы",
