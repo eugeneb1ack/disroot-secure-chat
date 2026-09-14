@@ -11,7 +11,9 @@ Supported code: the current `main` release and its pinned dependency lockfile. N
 - A roster must match MLS leaves and its admission chain must reach the pinned founding key.
 - New participants must not recover earlier message keys.
 - Ciphertext retries must be identical; uncertain writes must not reuse an encryption generation.
-- No key, plaintext or chat state may be persisted by the application.
+- The relay must never persist chat state. Local recovery may retain only an authenticated encrypted browser checkpoint until the shared deadline; never plaintext keys/messages.
+- A single Web Lock must cover the active MLS writer. Exact pending ciphertext and candidate state must be durable before publication. Reload must not reuse a consumed message generation.
+- End session removes the local record and revokes its relay token. Expired records must not restore, and are removed on the next visit when the browser was closed.
 - Joining and rekeying must not extend the shared expiry.
 - All untrusted input, pending work and retained state must be bounded.
 - The relay must remain separate from site credentials, files, public host ports and ordinary egress.

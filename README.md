@@ -25,7 +25,7 @@ keys + plaintext  ── MLS ──►  ciphertext + routing  ── MLS ──�
 - Responsive EN/RU messenger with a growing composer, emoji picker, encrypted replies/reactions and reduced-motion support.
 - Live participant status with a bounded, authenticated relay heartbeat; signed encrypted transport bindings and explicit orphaned-invitation errors.
 - Preserve the live identity when navigating back to the host site and reopening chat. Background tabs continue admission.
-- Reuse a live session across tabs of the same browser profile and origin; one original tab owns the keys and serializes all MLS writes.
+- Restore the same identity and locally received history after reload or reopening. An AES-256-GCM IndexedDB checkpoint stays in the same browser profile until expiry; Web Locks allow only one active MLS writer.
 - Optional Tor v3 onion gateway on the same host. The Tor service identity persists; chat state does not.
 
 ## Run locally
@@ -60,7 +60,7 @@ The optional Tor unit and torrc are examples for a Debian/Ubuntu host with Tor a
 
 This is a technical self-review, **not an independent audit**. The selected suite is classical, not post-quantum. We do not claim equivalence or superiority to Signal. A compromised website or device can read live plaintext and keys. A malicious relay or invited member can disrupt service. A stolen participant state requires an honest update by that participant after the attacker loses access. JavaScript cannot guarantee physical memory erasure or delete recipient copies. HTTPS exposes the peer address to the endpoint; Tor changes that network relationship without eliminating traffic-analysis risks.
 
-The shared deadline cannot be extended. Opening your invitation in the same browser reuses the original tab while it remains open. Closing or reloading the original tab loses its keys sooner; only then does a returning visitor need a new temporary identity. Do not reuse a sensitive identity based only on a familiar nickname; compare full fingerprints independently.
+The shared deadline cannot be extended. Reloading or reopening your invitation in the same browser profile and origin restores your saved session. Closing a tab makes it offline; End session revokes access and removes its local record. Clearing or evicting site storage, switching device/origin, a relay restart or missing retained relay events prevents recovery. The wrapping CryptoKey is non-extractable but stored in the same profile: malicious same-origin code or device access can still decrypt it. Expired local records are refused and removed on the next visit if the browser was closed. Physical erasure and removal of backups are not guaranteed. Do not reuse a sensitive identity based only on a familiar nickname; compare full fingerprints independently.
 
 Questions or private security reports: [Telegram DM](https://t.me/mailsec).
 

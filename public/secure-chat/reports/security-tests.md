@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T17:25:07.460Z
+Generated: 2026-09-14T18:22:43.686Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**95 checks; PASSED. Technical self-review, not an independent audit.**
+**109 checks; PASSED. Technical self-review, not an independent audit.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -100,6 +100,20 @@ Exit: 0. [Raw TAP output](integration.tap).
 - PASS — background admission yields to a held lease without reporting a connection failure
 - PASS — ending the session while waiting for a lease cancels sending before encryption
 - PASS — four concurrent writers deliver once each without user retries
+- PASS — saved sessions: reload retains nickname, fingerprint, history and the existing relay identity
+- PASS — saved sessions: both browsers can close and resume the same conversation
+- PASS — saved sessions: pending admission survives reload and consumes Welcome safely
+- PASS — saved sessions: accepted write interrupted before acknowledgement retries identical ciphertext once
+- PASS — saved sessions: unsent journal resumes under a fresh lease without re-encryption
+- PASS — saved sessions: end session removes the checkpoint and revokes its transport
+- PASS — saved sessions: storage failure prevents publishing ciphertext
+- PASS — saved sessions: expiry and wrong signing keys cannot restore a checkpoint
+- PASS — saved vault: AES-GCM hides text and rejects modified ciphertext, context and key
+- PASS — saved sessions: reload between durable Welcome and its ACK remains ready
+- PASS — saved sessions: interrupted admission commit restores the existing members and guest
+- PASS — saved sessions: temporary relay outage keeps the local checkpoint for another attempt
+- PASS — saved sessions: expired relay session removes the local checkpoint without recreating a room
+- PASS — HTTP transport: interrupted streams and invalid JSON remain recoverable gateway errors
 
 ## MLS retention and compromise scenarios (laboratory fixtures)
 

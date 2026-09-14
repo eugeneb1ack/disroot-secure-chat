@@ -2,7 +2,7 @@
 
 [Русский](secure-chat.ru.md) · [Security test report](../public/secure-chat/reports/security-tests.md) · [Browser and transport checks](../public/secure-chat/reports/release-checks.md) · [Review and remediation](../public/secure-chat/reports/review-closeout.md)
 
-One link, one conversation, up to 24 hours. Text and emoji. Browser-generated keys. No account, administrator, attachment, archive or recovery service.
+One link, one conversation, up to 24 hours. Text and emoji. Browser-generated keys. No account, administrator or attachment. Same-browser recovery until expiry; no server archive.
 
 ## Temporary identity
 
@@ -26,11 +26,11 @@ Joining changes the MLS epoch. Each active client also refreshes its own leaf ap
 
 ## One deadline
 
-The creator chooses one name and receives one invitation. A key is bound to one conversation. Everyone shares the deadline, at most 24 hours after creation; joins and key updates cannot extend it. The relay cleans expired rooms, ciphertext, grants, challenges and bindings every second and on requests. It has no chat database, disk archive or backup. Restarting it clears active chats sooner. The relay keeps at most 256 events or 1,000,000 encoded characters per conversation; clients retain at most 256 readable messages in memory.
+The creator chooses one name and receives one invitation. A key is bound to one conversation. Everyone shares the deadline, at most 24 hours after creation; joins and key updates cannot extend it. The relay cleans expired rooms, ciphertext, grants, challenges and bindings every second and on requests. It has no chat database, disk archive or backup. Restarting it clears active chats sooner. The relay keeps at most 256 events or 1,000,000 encoded characters per conversation; clients retain at most 256 readable messages, including their encrypted local checkpoint.
 
 ## Metadata minimization
 
-Nicknames, the chat name, MLS KeyPackages and roster bundles are encrypted before reaching the relay. The relay sees temporary transport identifiers, the routing group, membership operations, packet sizes and timing. Short application messages are padded to a 1,024-byte MLS content target; larger messages still reveal size differences. There are no chat cookies, localStorage, IndexedDB, analytics, private-key uploads or attachments.
+Nicknames, the chat name, MLS KeyPackages and roster bundles are encrypted before reaching the relay. The relay sees temporary transport identifiers, the routing group, membership operations, packet sizes and timing. Short application messages are padded to a 1,024-byte MLS content target; larger messages still reveal size differences. There are no chat cookies, localStorage, analytics, private-key uploads or attachments.
 
 ## Containment and resource limits
 
@@ -46,7 +46,7 @@ Replies carry only the original message ID and author fingerprint. The quote is 
 
 ## Returning to a live session
 
-Opening the same invitation in another tab of the same browser profile and origin can reuse the open session through BroadcastChannel. Its channel name is derived from the complete invitation. Only the original tab holds private keys and the relay token; other tabs exchange commands and readable UI state locally. All sends use the original client’s serialized MLS queue. Hiding the landing-page chat keeps it alive; End session ends all attached views. Closing an attached view leaves the original intact. Closing or reloading the original tab destroys its keys; this is not persistent recovery. Same-origin website code and the browser remain trusted, and another person using the same browser profile can access its live session. A suspended original tab may delay reconnection.
+The browser keeps an AES-256-GCM encrypted checkpoint in IndexedDB until the shared deadline. It includes the temporary identity, current MLS state, relay token and up to 256 locally received messages. The non-extractable wrapping CryptoKey is stored by the same browser; neither it nor the checkpoint is uploaded. Reloading or reopening the same invitation in the same profile and origin restores that participant without signing in again. Web Locks permit only one active MLS writer; other tabs use BroadcastChannel. Closing the page suspends the session without logout. End session deletes the local record and revokes its transport token. A private browser window, cleared site data, storage eviction or switching origin/device can remove or hide the saved session. The relay must still exist, and its bounded event window must cover the missed updates.
 
 ## Conditions and limits
 
@@ -64,7 +64,7 @@ Anyone with the full link can join while a participant is online and capacity re
 
 ### Deletion is bounded by the endpoints
 
-Expiry removes active application references and best-effort wipes mutable key buffers. JavaScript and browser memory do not guarantee physical zeroization. Recipients can keep messages or screenshots. A malicious host can record ciphertext or metadata. There is no application recovery service, but code cannot erase copies held elsewhere.
+Expiry removes active application references and best-effort wipes mutable key buffers. JavaScript and browser memory do not guarantee physical zeroization. Recipients can keep messages or screenshots. A malicious host can record ciphertext or metadata. The server cannot recover lost keys, and code cannot erase copies held elsewhere. Local recovery trades memory-only deletion for persistence on this device. The wrapping key prevents raw-key export through Web Crypto, but it is not a password or protection against malicious same-origin code, an unlocked browser profile or a compromised device. Current checkpoints exclude historical MLS epochs; storage snapshots, browser/OS backups and forensic remnants can still retain earlier checkpoints or readable history after local decryption. An open client deletes its record at expiry; while the browser is closed it cannot execute deletion, so expired records are refused and removed on the next visit. Physical erasure is not promised.
 
 ### Anonymity is not invisibility
 
@@ -115,3 +115,6 @@ Nginx must disable site access logs and chat request error logs, keep bodies in 
 - [Pinned implementation: ts-mls](https://github.com/LukaJCB/ts-mls)
 - [Tor onion setup](https://community.torproject.org/onion-services/setup/)
 - [Signal Double Ratchet](https://signal.org/docs/specifications/doubleratchet/)
+
+
+Before sending any ciphertext, the client durably checkpoints the exact packet and its candidate MLS state. After reload, an accepted write is acknowledged through an identical-ciphertext retry; an unpublished packet can use a new lease only at the same relay sequence. Conflicting or missing state fails closed. Welcome is checkpointed before its relay acknowledgement. Checkpoint replacement uses strict IndexedDB transactions and a revision check; storage failure prevents publication.

@@ -30,6 +30,17 @@ export function ChatLanguageSwitch() {
 }
 
 const errors: Record<string, string> = {
+  "The relay response was interrupted or invalid.": "Ответ сервера прерван или повреждён. Соединение будет восстановлено.",
+  "Browser session storage is unavailable. Allow site storage to keep this conversation after a reload.": "Хранилище браузера недоступно. Разрешите хранение данных сайта, чтобы возвращаться после перезагрузки.",
+  "This browser cannot safely restore chat sessions. Use a browser with Web Locks and site storage enabled.": "Для безопасного восстановления нужны Web Locks и доступное хранилище сайта. Откройте чат в поддерживающем их браузере.",
+  "Your conversation is open in another tab. Wait for that tab to reconnect.": "Беседа открыта в другой вкладке. Дождитесь её подключения и повторите вход.",
+  "Too many saved conversations. End an existing session first.": "Слишком много сохранённых бесед. Сначала завершите одну из сессий.",
+  "The saved conversation could not be verified. Its local copy was removed.": "Не удалось проверить сохранённую сессию. Повреждённая локальная копия удалена.",
+  "Invalid or expired saved conversation.": "Сохранённая сессия повреждена или её срок истёк.",
+  "The interrupted write cannot be reconciled safely. Start a new session.": "Не удалось безопасно восстановить прерванную отправку. Потребуется новая сессия.",
+  "The conversation is busy. Try returning shortly.": "Беседа обновляется. Повторите вход немного позже.",
+  "Saved session has ended.": "Сохранённая сессия завершена.",
+  "Saved conversation exceeds the browser storage limit.": "Сохранённая беседа превышает локальный лимит хранения.",
   "The conversation is busy. Your message was not sent. Try again shortly.": "Беседа пока занята. Отправка не выполнена. Повторите чуть позже.",
   "No participant is online. Ask your friend to open the original chat tab, then retry.": "Сейчас никто не онлайн. Попросите друга открыть исходную вкладку чата и повторите вход.",
   "No participant can open this conversation anymore. Create a new conversation and share its new link.": "В этой беседе больше не осталось активных ключей для подключения. Создайте новую беседу и отправьте новую ссылку.",

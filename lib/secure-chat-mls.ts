@@ -4,7 +4,7 @@ import {
   generateKeyPackageWithKey, getCiphersuiteFromName, getCiphersuiteImpl, joinGroup,
   processMessage, type ClientConfig, type ClientState, type CiphersuiteImpl, type KeyPackage, type PrivateKeyPackage,
 } from "ts-mls";
-import { applyProposals } from "ts-mls/clientState.js";
+import { applyProposals, encodeGroupState, decodeGroupState } from "ts-mls/clientState.js";
 import { toLeafIndex } from "ts-mls/treemath.js";
 import { authenticatedApplication, currentEpochState } from "./secure-chat-mls-adapter.ts";
 import { sha256 } from "@noble/hashes/sha2.js";
@@ -81,8 +81,14 @@ type WelcomeBundle = Roster & { id: string; requestHash: string; welcome: string
 type SignedText = { id: string; sender: string; body: string; epoch: string; signature: string; interaction?: MessageInteraction; interactionSignature?: string };
 type Manifest = { name: string; signature: string };
 export type PreparedPacket = { wire: string; bootstrap?: string; welcome?: string; commit: boolean };
+export type MlsCheckpoint = {
+  version: 1; invitation: ChatInvitation; identity: Profile; name: string; signKey: string;
+  state?: string; candidate?: string; profiles: Profile[]; admissions: Admission[]; joinRequest?: JoinRequest;
+  keys?: { publicPackage: string; initPrivateKey: string; hpkePrivateKey: string; signaturePrivateKey: string };
+};
 
-// Never persisted or exposed through React state. Calls are serialized by SecureChatClient.
+// Checkpoints go only to the browser's encrypted vault, never React or the relay.
+// Calls, including checkpoint creation, are serialized by SecureChatClient.
 export class MlsConversation {
   #state?: ClientState;
   #candidate?: ClientState;
@@ -118,6 +124,51 @@ export class MlsConversation {
   get ready() { return !!this.#state && !this.#closed; }
   get epoch() { return String(this.#state?.groupContext.epoch ?? BigInt(0)); }
   get profiles() { return structuredClone([...this.#profiles.values()]); }
+  checkpoint(): MlsCheckpoint {
+    this.check();
+    const encode = (state: ClientState | undefined) => {
+      if (!state) return undefined;
+      const current = clone(state), bytes = encodeGroupState(current);
+      try { return b64(bytes); } finally { wipe(current); wipe(bytes); }
+    };
+    return { version: 1, invitation: { ...this.invitation }, identity: structuredClone(this.identity), name: this.name,
+      signKey: b64(this.#signKey), state: encode(this.#state), candidate: encode(this.#candidate),
+      profiles: this.profiles, admissions: structuredClone([...this.#admissions.values()]), joinRequest: structuredClone(this.#joinRequest),
+      ...(this.#keys ? { keys: { publicPackage: b64(encodeMlsMessage({ version: "mls10", wireformat: "mls_key_package", keyPackage: this.#keys.publicPackage })),
+        initPrivateKey: b64(this.#keys.privatePackage.initPrivateKey), hpkePrivateKey: b64(this.#keys.privatePackage.hpkePrivateKey), signaturePrivateKey: b64(this.#keys.privatePackage.signaturePrivateKey) } } : {}) };
+  }
+  static async restore(saved: MlsCheckpoint) {
+    const invite = saved.invitation;
+    if (saved.version !== 1 || !invite || !idPattern.test(invite.room) || !hexPattern.test(invite.secret) || !hexPattern.test(invite.founder) || invite.expires <= Date.now() || invite.expires > Date.now() + CHAT_TTL) throw new Error("Invalid or expired saved conversation.");
+    const suite = await getCiphersuiteImpl(getCiphersuiteFromName(SUITE));
+    const instance = new MlsConversation(suite, unb64(saved.signKey, 128), { ...invite }, structuredClone(saved.identity));
+    try {
+      await instance.verifyProfile(instance.identity);
+      await instance.verify(instance.identity.key, await instance.sign("checkpoint-v1"), "checkpoint-v1");
+      const decode = (wire?: string) => {
+        if (!wire) return undefined;
+        const bytes = unb64(wire, 2_000_000);
+        try {
+          const parsed = decodeGroupState(bytes, 0);
+          if (!parsed || parsed[1] !== bytes.length || hex(parsed[0].groupContext.groupId) !== invite.room || parsed[0].groupContext.cipherSuite !== SUITE || parsed[0].historicalReceiverData.size) throw new Error("Invalid saved MLS state.");
+          // The decoder may return views into bytes; detach them before wiping.
+          return clone({ ...parsed[0], clientConfig: config });
+        } finally { wipe(bytes); }
+      };
+      instance.#state = decode(saved.state); instance.#candidate = decode(saved.candidate);
+      if (instance.#state) await instance.validateProfiles(saved.profiles, instance.#state, saved.admissions);
+      else if (saved.profiles.length !== 1 || saved.profiles[0].id !== saved.identity.id || !saved.keys || !saved.joinRequest) throw new Error("Invalid saved admission state.");
+      instance.#profiles = new Map(structuredClone(saved.profiles).map(profile => [profile.id, profile]));
+      instance.#admissions = new Map(structuredClone(saved.admissions).map(admission => [admission.member, admission]));
+      instance.#joinRequest = structuredClone(saved.joinRequest);
+      if (saved.keys) {
+        const wire = readWire(saved.keys.publicPackage);
+        if (wire.wireformat !== "mls_key_package" || hex(wire.keyPackage.leafNode.signaturePublicKey) !== instance.identity.key) throw new Error("Invalid saved KeyPackage.");
+        instance.#keys = { publicPackage: wire.keyPackage, privatePackage: { initPrivateKey: unb64(saved.keys.initPrivateKey, 128), hpkePrivateKey: unb64(saved.keys.hpkePrivateKey, 128), signaturePrivateKey: unb64(saved.keys.signaturePrivateKey, 128) } };
+      }
+      instance.name = saved.name; return instance;
+    } catch (error) { instance.close(); throw error; }
+  }
   async bindConnection(id: string) {
     this.check();
     if (!idPattern.test(id) || this.#state || this.#joinRequest || this.identity.connection) throw new Error("Invalid transport identity binding.");

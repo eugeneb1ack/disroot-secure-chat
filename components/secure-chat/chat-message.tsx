@@ -37,7 +37,7 @@ export function ChatMessage({ message, original, own, grouped, identity, busy, o
     <span className="chat-message-avatar" aria-hidden="true">{message.nickname.slice(0, 2).toUpperCase()}</span>
     <div className="chat-message-stack">
       <div className="chat-message">
-        <header><strong title={prettyFingerprint(message.sender)}>{own ? t("You", "Вы") : message.nickname}</strong><span className="chat-message-key-id" title={prettyFingerprint(message.sender)}>{message.sender.slice(-8).toUpperCase()}</span></header>
+        <header><strong title={prettyFingerprint(message.sender)}>{message.nickname}</strong>{own && <span className="chat-message-self">{t("you", "вы")}</span>}<span className="chat-message-key-id" title={prettyFingerprint(message.sender)}>{message.sender.slice(-8).toUpperCase()}</span></header>
         {message.replyTo && <button type="button" className="chat-message-quote" disabled={!original} onClick={jump} aria-label={original ? t(`Go to message from ${original.nickname}`, `Перейти к сообщению ${original.nickname}`) : undefined}>
           <strong>{original?.nickname ?? t("Earlier message", "Предыдущее сообщение")}</strong>
           <span>{original?.body ?? t("Not available in this tab", "Недоступно в этой вкладке")}</span>

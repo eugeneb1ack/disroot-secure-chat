@@ -2,8 +2,8 @@ import type { ChatInvitation } from "./secure-chat-protocol.ts";
 import type { ChatSession } from "./secure-chat-session.ts";
 import { startChatPolling } from "./secure-chat-polling.ts";
 
-// One live session per document. Survives Next client-side navigation, never a
-// reload. No key serialization, persistent storage or MLS state copying.
+// One live session per document. Route views never own its lifetime. The browser
+// session adapter checkpoints before publication and suspends on pagehide.
 let active: ChatSession | undefined;
 let stop: (() => void) | undefined;
 const matches = (a: ChatInvitation, b: ChatInvitation) => a.room === b.room && a.secret === b.secret && a.founder === b.founder && a.expires === b.expires;

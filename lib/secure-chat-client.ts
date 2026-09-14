@@ -1,4 +1,4 @@
-import { b64, capability, digest, MlsConversation, randomId, seal, unseal, utf8, type PreparedPacket } from "./secure-chat-mls.ts";
+import { b64, capability, digest, MlsConversation, randomId, seal, unseal, utf8, type PreparedPacket, type MlsCheckpoint } from "./secure-chat-mls.ts";
 import { MAX_MEMBERS, PRESENCE_TTL, idPattern, loginText, type ChatInvitation, type ChatView, type LoginChallenge, type LoginRequest, type ReadableMessage, type RelaySnapshot, type RelayPresence, type TransportPublicKey, type MessageInteraction, type MessageReference, type Reaction } from "./secure-chat-protocol.ts";
 import { applyMessageEvent, findMessage, reactionFallback, validInteraction, validMessageText, validReference } from "./secure-chat-interactions.ts";
 
@@ -7,6 +7,9 @@ export class ChatApiError extends Error {
   constructor(message: string, status: number) { super(message); this.status = status; }
 }
 export type ChatTransport = <T>(action?: Record<string, unknown>, token?: string, after?: number) => Promise<T>;
+type PendingPublication = { id: string; lease: string; packet: PreparedPacket; join?: string; message?: { body: string; interaction?: MessageInteraction; time: string } };
+export type ChatCheckpoint = { version: 1; mls: MlsCheckpoint; token: string; seq: number; manifest: string; messages: ReadableMessage[]; lastRefresh: number; pendingId: string; publication?: PendingPublication };
+export interface ChatPersistence { save(value: ChatCheckpoint): Promise<void>; clear(): Promise<void> }
 export const httpTransport: ChatTransport = async <T>(action?: Record<string, unknown>, token?: string, after = 0) => {
   const response = await fetch(`/api/secure-chat${action ? "" : `?after=${after}`}`, {
     method: action ? "POST" : "GET", credentials: "omit", cache: "no-store", redirect: "error",
@@ -19,10 +22,13 @@ export const httpTransport: ChatTransport = async <T>(action?: Record<string, un
   const chunks: Uint8Array[] = []; let size = 0;
   try {
     for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.length; if (size > 2_500_000) { await reader.cancel(); throw new ChatApiError("Relay response exceeded its limit.", 502); } chunks.push(value); }
-  } finally { reader.releaseLock(); }
+  } catch { throw new ChatApiError("The relay response was interrupted or invalid.", 502); }
+  finally { reader.releaseLock(); }
   const buffer = new Uint8Array(size); let offset = 0;
   for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.length; }
-  const data = JSON.parse(new TextDecoder().decode(buffer));
+  let data;
+  try { data = JSON.parse(new TextDecoder().decode(buffer)); }
+  catch { throw new ChatApiError("The relay response was interrupted or invalid.", 502); }
   if (!response.ok) throw new ChatApiError(typeof data.error === "string" ? data.error : "Connection failed.", response.status);
   return data as T;
 };
@@ -41,6 +47,9 @@ export class SecureChatClient {
   #presence?: RelayPresence[];
   #presenceAt = 0;
   #polling?: Promise<void>;
+  #persistence?: ChatPersistence;
+  #publication?: PendingPublication;
+  #erasing: Promise<void> = Promise.resolve();
   private constructor(crypto: MlsConversation, transport: ChatTransport) { this.#crypto = crypto; this.#transport = transport; }
   static async connect(nickname: string, name: string, invite: ChatInvitation | null, origin: string, transport: ChatTransport = httpTransport) {
     const mls = await MlsConversation.generate(nickname, invite ?? undefined), client = new SecureChatClient(mls, transport);
@@ -63,6 +72,33 @@ export class SecureChatClient {
     } catch (error) { client.close(); throw error; }
   }
   get invitation() { return { ...this.#crypto.invitation }; }
+  async persistWith(storage: ChatPersistence) { this.#persistence = storage; await this.#save(); }
+  async #save() {
+    this.#check();
+    if (this.#persistence) await this.#persistence.save({ version: 1, mls: this.#crypto.checkpoint(), token: this.#token, seq: this.#seq, manifest: this.#manifest,
+      messages: structuredClone(this.#messages), lastRefresh: this.#lastRefresh, pendingId: this.#pendingId, publication: structuredClone(this.#publication) });
+    this.#check();
+  }
+  static async restore(saved: ChatCheckpoint, storage: ChatPersistence, transport: ChatTransport = httpTransport) {
+    let mls: MlsConversation;
+    try {
+      if (saved.version !== 1 || !/^[0-9a-f]{64}$/.test(saved.token) || !Number.isSafeInteger(saved.seq) || saved.seq < 0 || !Array.isArray(saved.messages) || saved.messages.length > 256 || !!saved.publication !== !!saved.mls.candidate) throw new Error("Invalid saved conversation.");
+      mls = await MlsConversation.restore(saved.mls);
+    } catch (error) { await storage.clear(); throw error; }
+    const client = new SecureChatClient(mls, transport);
+    client.#persistence = storage; client.#token = saved.token; client.#seq = saved.seq; client.#manifest = saved.manifest;
+    client.#messages = structuredClone(saved.messages); client.#lastRefresh = saved.lastRefresh; client.#pendingId = saved.pendingId; client.#publication = structuredClone(saved.publication);
+    try {
+      await client.#crypto.readManifest(saved.manifest);
+      await client.#serial(async () => { if (client.#publication) await client.#recoverPublication(); await client.#pull(); });
+      return client;
+    } catch (error) {
+      // A temporary outage must not turn a reload into irreversible logout.
+      if (error instanceof ChatApiError && [409, 429, 502, 503].includes(error.status)) { client.suspend(); }
+      else await client.close();
+      throw error;
+    }
+  }
   get closed() { return this.#closed; }
   get view(): ChatView {
     const fresh = Date.now() - this.#presenceAt < PRESENCE_TTL;
@@ -75,10 +111,11 @@ export class SecureChatClient {
   #serial<T>(work: () => Promise<T>) {
     const result = this.#queue.then(async () => {
       this.#check();
-      try { return await work(); }
+      try { const result = await work(); await this.#save(); return result; }
       catch (error) {
         // Network congestion can recover. Authentication/state-integrity failures cannot.
         if (!(error instanceof ChatApiError) || ![409, 429, 502, 503].includes(error.status)) this.close();
+        else if (!this.#closed) await this.#save();
         throw error;
       }
     });
@@ -100,6 +137,12 @@ export class SecureChatClient {
       if (!Number.isSafeInteger(snapshot.welcome.seq) || snapshot.welcome.seq > snapshot.seq || snapshot.welcome.seq <= 0) throw new Error("Invalid welcome sequence.");
       await this.#crypto.acceptWelcome(snapshot.welcome.sealed);
       this.#seq = snapshot.welcome.seq; this.#lastRefresh = 0;
+      // Welcome can be removed from the relay only after its new state is durable.
+      await this.#save();
+      await this.#api({ action: "acknowledge" });
+    } else if (this.#crypto.ready && snapshot.welcome) {
+      // Reload may occur after the durable Welcome checkpoint but before ACK.
+      if (!Number.isSafeInteger(snapshot.welcome.seq) || snapshot.welcome.seq > this.#seq || snapshot.welcome.seq <= 0) throw new Error("Invalid saved welcome sequence.");
       await this.#api({ action: "acknowledge" });
     }
     if (this.#crypto.ready) for (const event of snapshot.events) {
@@ -137,15 +180,27 @@ export class SecureChatClient {
     }
     throw new ChatApiError("The conversation is busy. Your message was not sent. Try again shortly.", 409);
   }
-  async #publish(id: string, lease: string, packet: PreparedPacket, join?: string) {
+  async #publish(id: string, lease: string, packet: PreparedPacket, join?: string, message?: PendingPublication["message"]) {
+    this.#publication = { id, lease, packet, join, message };
+    // Persist the exact ciphertext AND its candidate state before any wire leaves.
+    await this.#save();
+    try { return await this.#flushPublication(); }
+    catch (error) { throw new Error(`The write could not be confirmed. Your keys were discarded to prevent unsafe reuse. ${error instanceof ChatApiError ? error.message : "Open the invitation again."}`); }
+  }
+  async #flushPublication() {
+    const { id, lease, packet, join, message } = this.#publication!;
     const command = { action: "publish", id, lease, wire: packet.wire, ...(packet.bootstrap ? { bootstrap: packet.bootstrap } : {}), ...(join ? { join, welcome: packet.welcome } : {}) };
     let last: unknown;
     for (let attempt = 0; attempt < 3; attempt++) {
+      this.#check();
       try {
         const response = await this.#api<{ seq: number }>(command);
         if (response.seq !== this.#seq + 1) throw new Error("Write acknowledgement does not match this state.");
         this.#check(); await this.#crypto.confirm(packet.bootstrap); this.#seq = response.seq;
         if (packet.commit) this.#lastRefresh = Date.now();
+        if (message) applyMessageEvent(this.#messages, { id, sender: this.#crypto.identity.id, body: message.body, interaction: message.interaction }, this.#crypto.identity.nickname, message.time);
+        this.#publication = undefined;
+        await this.#save();
         return;
       } catch (error) {
         last = error;
@@ -154,8 +209,28 @@ export class SecureChatClient {
     }
     // No retry may re-encrypt against a potentially used generation. Identical wire only;
     // an unresolved write destroys this session instead of rolling cryptographic state back.
-    this.close();
-    throw new Error(`The write could not be confirmed. Your keys were discarded to prevent unsafe reuse. ${last instanceof ChatApiError ? last.message : "Open the invitation again."}`);
+    throw last instanceof Error ? last : new Error("The write could not be confirmed.");
+  }
+  async #recoverPublication() {
+    const deadline = Date.now() + 25_000;
+    for (;;) {
+      try { await this.#flushPublication(); return; }
+      catch (error) {
+        this.#check();
+        if (!(error instanceof ChatApiError) || error.status !== 409) throw error;
+        const snapshot = await this.#api<RelaySnapshot>();
+        if (snapshot.expires !== this.invitation.expires || snapshot.manifest !== this.#manifest || snapshot.seq !== this.#seq) throw new Error("The interrupted write cannot be reconciled safely. Start a new session.");
+        if (Date.now() >= deadline) throw new ChatApiError("The conversation is busy. Try returning shortly.", 409);
+        try {
+          const lease = await this.#api<{ id: string; expires: number }>({ action: "claim", seq: this.#seq });
+          if (!/^[0-9a-f]{64}$/.test(lease.id) || lease.expires <= Date.now() || lease.expires > Date.now() + 20_000) throw new Error("Invalid restored write lease.");
+          this.#publication!.lease = lease.id; await this.#save();
+        } catch (claimError) {
+          if (!(claimError instanceof ChatApiError) || ![409, 429].includes(claimError.status)) throw claimError;
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+    }
   }
   poll() {
     // Multiple views share one poll, including while the owning tab is hidden.
@@ -181,7 +256,8 @@ export class SecureChatClient {
         await this.#api({ action: "release", lease: lease.id });
         return;
       }
-      await this.#publish(randomId(), lease.id, packet, pending.id);
+      try { await this.#publish(randomId(), lease.id, packet, pending.id); }
+      catch (error) { this.close(); throw error; }
     } else if (Date.now() - this.#lastRefresh > 5 * 60_000) {
       const lease = await this.#claim(false);
       if (!lease) return;
@@ -215,16 +291,23 @@ export class SecureChatClient {
     }
     try {
       const packet = await this.#crypto.prepareText(id, body, interaction);
-      await this.#publish(id, lease.id, packet);
-      applyMessageEvent(this.#messages, { id, sender: this.#crypto.identity.id, body, interaction }, this.#crypto.identity.nickname, new Date().toISOString());
+      await this.#publish(id, lease.id, packet, undefined, { body, interaction, time: new Date().toISOString() });
     } catch (error) { this.close(); throw error; }
   }); }
   close() {
-    if (this.#closed) return;
+    if (this.#closed) return this.#erasing;
+    const storage = this.#persistence; this.#persistence = undefined;
+    if (storage) this.#erasing = storage.clear().catch(() => {});
+    this.#dispose(true);
+    return this.#erasing;
+  }
+  suspend() { if (!this.#closed) this.#dispose(false); }
+  #dispose(logout: boolean) {
     this.#closed = true;
     this.#presence = undefined; this.#presenceAt = 0;
     const token = this.#token; this.#token = ""; this.#pendingId = ""; this.#manifest = ""; this.#messages = [];
     this.#crypto.close();
-    if (token) void this.#transport({ action: "logout" }, token).catch(() => {});
+    this.#publication = undefined; this.#persistence = undefined;
+    if (logout && token) void this.#transport({ action: "logout" }, token).catch(() => {});
   }
 }

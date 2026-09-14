@@ -117,7 +117,7 @@ export function SecureChatSection({ active, onOpenChange }: { active: boolean; o
         <p className="label">PRIVATE CHAT / MLS</p>
         <h2>Secure<span> Chat</span><i aria-hidden="true">_</i></h2>
         <p className="secure-chat-invitation" ref={textRef} lang="en">{invitations[0].text}</p>
-        <p className="secure-chat-description">End-to-end encrypted. Keys stay in your browser. One link. Up to 24 hours. No archive.</p>
+        <p className="secure-chat-description">End-to-end encrypted. Keys stay in your browser. One link. Up to 24 hours. No server archive.</p>
         <button type="button" className="chat-button chat-primary" ref={buttonRef} onClick={() => { setStarted(true); setOpen(true); }}>OPEN SECURE CHAT <span aria-hidden="true">↗</span></button>
         <p className="secure-chat-footnote">Temporary keys · Private invitations</p>
       </div>

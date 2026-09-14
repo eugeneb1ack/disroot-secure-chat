@@ -14,20 +14,22 @@ export interface ChatSession {
   close(): void;
   detach(): void;
 }
-// Same-origin, memory-only UI bridge. The owner is the ONLY MLS writer and the
-// only tab holding private keys or the relay token. No crypto state is exported.
+// Same-origin UI bridge. The locked owner is the only active MLS writer.
+// Private keys and relay tokens never cross this channel; recovery uses the vault.
 const sessionName = (invite: ChatInvitation) => `disroot-chat-live-${digest(JSON.stringify([invite.room, invite.secret, invite.founder, invite.expires]))}`;
 type Rpc = { id: string; method: "view" | "poll" | "send" | "react" | "close"; body?: string; target?: MessageReference; emoji?: Reaction | null };
 type Response = { id: string; view?: ChatView; closed: boolean; error?: string; status?: number };
 const validRpc = (value: unknown): value is Rpc => !!value && typeof value === "object" && "id" in value && typeof value.id === "string" && /^[0-9a-f]{32}$/.test(value.id) && "method" in value && ["view", "poll", "send", "react", "close"].includes(String(value.method));
 
-export function ownChatSession(client: SecureChatClient): ChatSession {
+export function ownChatSession(client: SecureChatClient, releaseWriter?: () => void): ChatSession {
   const invite = client.invitation;
   const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(sessionName(invite)) : undefined;
   let stopped = false, pending = 0;
   const close = () => {
     if (stopped) return;
-    stopped = true; channel?.postMessage({ ended: true }); channel?.close(); client.close();
+    stopped = true; channel?.postMessage({ ended: true }); channel?.close();
+    // Another writer may claim the session only after its local record is gone.
+    void client.close().finally(() => releaseWriter?.());
   };
   if (channel) channel.onmessage = async ({ data }: MessageEvent<unknown>) => {
     if (!validRpc(data) || stopped) return;
@@ -46,7 +48,8 @@ export function ownChatSession(client: SecureChatClient): ChatSession {
   };
   return {
     get view() { return client.view; }, get invitation() { return client.invitation; }, get closed() { return client.closed; }, mirrored: false,
-    poll: () => client.poll(), send: (body, target) => client.send(body, target), react: (target, emoji) => client.react(target, emoji), close, detach: close,
+    poll: () => client.poll(), send: (body, target) => client.send(body, target), react: (target, emoji) => client.react(target, emoji), close,
+    detach: () => { if (!releaseWriter) { close(); return; } if (!stopped) { stopped = true; channel?.close(); client.suspend(); releaseWriter(); } },
   };
 }
 

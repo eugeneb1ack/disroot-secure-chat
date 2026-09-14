@@ -1,530 +1,614 @@
 TAP version 13
-# (node:76960) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/johndoe/Documents/disrootsite/lib/secure-chat-store.ts is not specified and it doesn't parse as CommonJS.
+# (node:83303) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/johndoe/Documents/disrootsite/lib/secure-chat-store.ts is not specified and it doesn't parse as CommonJS.
 # Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
 # To eliminate this warning, add "type": "module" to /Users/johndoe/Documents/disrootsite/package.json.
 # (Use `node --trace-warnings ...` to show where the warning was created)
 # Subtest: production clients: creator remains in the same chat after a guest joins
 ok 1 - production clients: creator remains in the same chat after a guest joins
   ---
-  duration_ms: 77.1115
+  duration_ms: 66.449416
   type: 'test'
   ...
 # Subtest: production clients: bidirectional Unicode and emoji survive relay serialization
 ok 2 - production clients: bidirectional Unicode and emoji survive relay serialization
   ---
-  duration_ms: 45.241584
+  duration_ms: 36.507125
   type: 'test'
   ...
 # Subtest: a third client joins through a non-founder and cannot read earlier messages
 ok 3 - a third client joins through a non-founder and cannot read earlier messages
   ---
-  duration_ms: 90.248959
+  duration_ms: 76.043916
   type: 'test'
   ...
 # Subtest: lost publish acknowledgement retries identical wire and appends once
 ok 4 - lost publish acknowledgement retries identical wire and appends once
   ---
-  duration_ms: 35.122916
+  duration_ms: 29.177209
   type: 'test'
   ...
 # Subtest: uncertain writes discard the session instead of reusing MLS generations
 ok 5 - uncertain writes discard the session instead of reusing MLS generations
   ---
-  duration_ms: 33.474125
+  duration_ms: 27.845833
   type: 'test'
   ...
 # Subtest: expired write lease fails closed after encryption
 ok 6 - expired write lease fails closed after encryption
   ---
-  duration_ms: 34.111375
+  duration_ms: 27.222042
   type: 'test'
   ...
 # Subtest: simultaneous sends serialize without duplicate delivery
 ok 7 - simultaneous sends serialize without duplicate delivery
   ---
-  duration_ms: 250.8865
+  duration_ms: 428.948875
   type: 'test'
   ...
 # Subtest: nickname and cleartext never enter the production relay state or request bodies
 ok 8 - nickname and cleartext never enter the production relay state or request bodies
   ---
-  duration_ms: 39.855959
+  duration_ms: 32.51875
   type: 'test'
   ...
 # Subtest: the invitation secret is domain-separated from the transport capability
 ok 9 - the invitation secret is domain-separated from the transport capability
   ---
-  duration_ms: 1.898083
+  duration_ms: 1.838459
   type: 'test'
   ...
 # Subtest: invitation parser rejects duplicates, downgrade, expired and oversized links
 ok 10 - invitation parser rejects duplicates, downgrade, expired and oversized links
   ---
-  duration_ms: 1.368542
+  duration_ms: 1.393916
   type: 'test'
   ...
 # Subtest: bootstrap AEAD binds packet purpose and room deadline
 ok 11 - bootstrap AEAD binds packet purpose and room deadline
   ---
-  duration_ms: 2.727125
+  duration_ms: 1.369666
   type: 'test'
   ...
 # Subtest: tampered manifest and wrong founder anchor are rejected
 ok 12 - tampered manifest and wrong founder anchor are rejected
   ---
-  duration_ms: 4.819041
+  duration_ms: 3.036292
   type: 'test'
   ...
 # Subtest: one-use login challenge rejects replays and concurrent authentication
 ok 13 - one-use login challenge rejects replays and concurrent authentication
   ---
-  duration_ms: 2.870167
+  duration_ms: 2.170959
   type: 'test'
   ...
 # Subtest: invalid signature consumes a challenge and cannot be retried with the correct key
 ok 14 - invalid signature consumes a challenge and cannot be retried with the correct key
   ---
-  duration_ms: 2.105209
+  duration_ms: 2.680875
   type: 'test'
   ...
 # Subtest: login challenge binds the browser origin
 ok 15 - login challenge binds the browser origin
   ---
-  duration_ms: 1.649125
+  duration_ms: 1.420375
   type: 'test'
   ...
 # Subtest: private transport JWK fields are rejected before importing a key
 ok 16 - private transport JWK fields are rejected before importing a key
   ---
-  duration_ms: 2.026292
+  duration_ms: 1.197
   type: 'test'
   ...
 # Subtest: a transport key cannot create a second conversation
 ok 17 - a transport key cannot create a second conversation
   ---
-  duration_ms: 2.4395
+  duration_ms: 1.545541
   type: 'test'
   ...
 # Subtest: concurrent authentication at the binding limit leaves no orphan conversations
 ok 18 - concurrent authentication at the binding limit leaves no orphan conversations
   ---
-  duration_ms: 273.5415
+  duration_ms: 207.492875
   type: 'test'
   ...
 # Subtest: wrong invitation capability and extended deadline cannot join
 ok 19 - wrong invitation capability and extended deadline cannot join
   ---
-  duration_ms: 35.942125
+  duration_ms: 25.877125
   type: 'test'
   ...
 # Subtest: 24-hour cleanup removes room, messages, sessions, pending joins and bindings
 ok 20 - 24-hour cleanup removes room, messages, sessions, pending joins and bindings
   ---
-  duration_ms: 37.227166
+  duration_ms: 28.112875
   type: 'test'
   ...
 # Subtest: join and key updates do not extend the shared deadline
 ok 21 - join and key updates do not extend the shared deadline
   ---
-  duration_ms: 33.615208
+  duration_ms: 26.826
   type: 'test'
   ...
 # Subtest: challenge floods are bounded without IP storage
 ok 22 - challenge floods are bounded without IP storage
   ---
-  duration_ms: 3.488041
+  duration_ms: 2.770666
   type: 'test'
   ...
 # Subtest: cross-site Origin, fetch-site and unconfigured Host are denied
 ok 23 - cross-site Origin, fetch-site and unconfigured Host are denied
   ---
-  duration_ms: 0.271792
+  duration_ms: 0.192458
   type: 'test'
   ...
 # Subtest: API rejects malformed JSON, oversize body and legacy admin actions
 ok 24 - API rejects malformed JSON, oversize body and legacy admin actions
   ---
-  duration_ms: 0.559791
+  duration_ms: 0.518792
   type: 'test'
   ...
 # Subtest: MLS rejects a replayed message and accepts the following generation
 ok 25 - MLS rejects a replayed message and accepts the following generation
   ---
-  duration_ms: 18.499875
+  duration_ms: 15.670583
   type: 'test'
   ...
 # Subtest: tampered ciphertext fails without consuming the valid generation
 ok 26 - tampered ciphertext fails without consuming the valid generation
   ---
-  duration_ms: 16.611167
+  duration_ms: 14.486333
   type: 'test'
   ...
 # Subtest: message identifier substitution fails even with valid MLS ciphertext
 ok 27 - message identifier substitution fails even with valid MLS ciphertext
   ---
-  duration_ms: 16.131708
+  duration_ms: 14.568333
   type: 'test'
   ...
 # Subtest: MLS framing rejects truncated, trailing and noncanonical base64 data
 ok 28 - MLS framing rejects truncated, trailing and noncanonical base64 data
   ---
-  duration_ms: 14.696209
+  duration_ms: 12.921375
   type: 'test'
   ...
 # Subtest: an invitation holder cannot substitute another participant's signed nickname
 ok 29 - an invitation holder cannot substitute another participant's signed nickname
   ---
-  duration_ms: 15.6895
+  duration_ms: 13.37325
   type: 'test'
   ...
 # Subtest: case-insensitive nickname collisions cannot enter the verified roster
 ok 30 - case-insensitive nickname collisions cannot enter the verified roster
   ---
-  duration_ms: 15.39325
+  duration_ms: 13.351834
   type: 'test'
   ...
 # Subtest: Welcome is one-use and cannot be consumed by a different KeyPackage
 ok 31 - Welcome is one-use and cannot be consumed by a different KeyPackage
   ---
-  duration_ms: 15.614
+  duration_ms: 13.35675
   type: 'test'
   ...
 # Subtest: a pending encrypted packet blocks generation of a second ciphertext
 ok 32 - a pending encrypted packet blocks generation of a second ciphertext
   ---
-  duration_ms: 12.98675
+  duration_ms: 11.613042
   type: 'test'
   ...
 # Subtest: padding equalizes two short application messages
 ok 33 - padding equalizes two short application messages
   ---
-  duration_ms: 18.06175
+  duration_ms: 14.2625
   type: 'test'
   ...
 # Subtest: closing the client clears its active identity state and invitation secret
 ok 34 - closing the client clears its active identity state and invitation secret
   ---
-  duration_ms: 29.471708
+  duration_ms: 24.851083
   type: 'test'
   ...
 # Subtest: bounded parser fuzz: 256 deterministic malformed MLS packets never render text
 ok 35 - bounded parser fuzz: 256 deterministic malformed MLS packets never render text
   ---
-  duration_ms: 34.176875
+  duration_ms: 31.657166
   type: 'test'
   ...
 # Subtest: integrity mutation matrix: 32 ciphertext bit flips are rejected
 ok 36 - integrity mutation matrix: 32 ciphertext bit flips are rejected
   ---
-  duration_ms: 33.674584
+  duration_ms: 30.239084
   type: 'test'
   ...
 # Subtest: an old relay snapshot cannot roll back a live client's cursor
 ok 37 - an old relay snapshot cannot roll back a live client's cursor
   ---
-  duration_ms: 32.647
+  duration_ms: 26.805208
   type: 'test'
   ...
 # Subtest: a substituted event packet closes the client without rendering unverified text
 ok 38 - a substituted event packet closes the client without rendering unverified text
   ---
-  duration_ms: 32.234792
+  duration_ms: 30.151917
   type: 'test'
   ...
 # Subtest: unknown bearer token cannot read, claim, publish or enumerate a room
 ok 39 - unknown bearer token cannot read, claim, publish or enumerate a room
   ---
-  duration_ms: 0.271
+  duration_ms: 0.313375
   type: 'test'
   ...
 # Subtest: cross-conversation packets cannot decrypt even with a reused message id
 ok 40 - cross-conversation packets cannot decrypt even with a reused message id
   ---
-  duration_ms: 16.24675
+  duration_ms: 14.069291
   type: 'test'
   ...
 # Subtest: audit regression: an invitation holder's alternate MLS group lacks the pinned founder
 ok 41 - audit regression: an invitation holder's alternate MLS group lacks the pinned founder
   ---
-  duration_ms: 13.498834
+  duration_ms: 11.056542
   type: 'test'
   ...
 # Subtest: audit regression: a real founder roster without a valid admission chain is rejected
 ok 42 - audit regression: a real founder roster without a valid admission chain is rejected
   ---
-  duration_ms: 13.479708
+  duration_ms: 10.816791
   type: 'test'
   ...
 # Subtest: audit regression: an admitted peer cannot rewrap Alice's signed text as its MLS message
 ok 43 - audit regression: an admitted peer cannot rewrap Alice's signed text as its MLS message
   ---
-  duration_ms: 17.234958
+  duration_ms: 14.038583
   type: 'test'
   ...
 # Subtest: audit regression: a signed request with an invalid inner KeyPackage cannot close incumbents
 ok 44 - audit regression: a signed request with an invalid inner KeyPackage cannot close incumbents
   ---
-  duration_ms: 41.742375
+  duration_ms: 30.726625
   type: 'test'
   ...
 # Subtest: audit regression: current state drops withheld prior-epoch ciphertext after refresh
 ok 45 - audit regression: current state drops withheld prior-epoch ciphertext after refresh
   ---
-  duration_ms: 31.118667
+  duration_ms: 21.032584
   type: 'test'
   ...
 # Subtest: audit regression: the state adapter discards retained old epochs without aliasing live secrets
 ok 46 - audit regression: the state adapter discards retained old epochs without aliasing live secrets
   ---
-  duration_ms: 0.209
+  duration_ms: 0.18575
   type: 'test'
   ...
 # Subtest: audit regression: repeated unadmitted logouts release all member reservations
 ok 47 - audit regression: repeated unadmitted logouts release all member reservations
   ---
-  duration_ms: 16.084
+  duration_ms: 13.683625
   type: 'test'
   ...
 # Subtest: audit regression: an abandoned login without enqueue expires after two minutes
 ok 48 - audit regression: an abandoned login without enqueue expires after two minutes
   ---
-  duration_ms: 2.419459
+  duration_ms: 1.934667
   type: 'test'
   ...
 # Subtest: audit regression: sixteen full relay windows keep accepting bounded replacement writes
 ok 49 - audit regression: sixteen full relay windows keep accepting bounded replacement writes
   ---
-  duration_ms: 66.001167
+  duration_ms: 60.963375
   type: 'test'
   ...
 # Subtest: simultaneous incumbent admission attempts leave all three clients usable
 ok 50 - simultaneous incumbent admission attempts leave all three clients usable
   ---
-  duration_ms: 83.742333
+  duration_ms: 67.31575
   type: 'test'
   ...
 # Subtest: closing during asynchronous key refresh cannot resurrect a cryptographic session
 ok 51 - closing during asynchronous key refresh cannot resurrect a cryptographic session
   ---
-  duration_ms: 17.233834
+  duration_ms: 17.503542
   type: 'test'
   ...
 # Subtest: sixteen real MLS participants fit the relay packet budgets and exchange text
 ok 52 - sixteen real MLS participants fit the relay packet budgets and exchange text
   ---
-  duration_ms: 3598.587542
+  duration_ms: 3324.046
   type: 'test'
   ...
 # Subtest: only the configured v3 onion authority is allowed, with exact same-origin POST
 ok 53 - only the configured v3 onion authority is allowed, with exact same-origin POST
   ---
-  duration_ms: 0.369625
+  duration_ms: 0.323542
   type: 'test'
   ...
 # Subtest: encrypted replies bind the exact original author and message
 ok 54 - encrypted replies bind the exact original author and message
   ---
-  duration_ms: 40.750875
+  duration_ms: 33.217375
   type: 'test'
   ...
 # Subtest: reactions set, replace and remove only the authenticated participant's reaction
 ok 55 - reactions set, replace and remove only the authenticated participant's reaction
   ---
-  duration_ms: 44.163708
+  duration_ms: 41.115792
   type: 'test'
   ...
 # Subtest: identical reaction operations and a lost acknowledgement are idempotent
 ok 56 - identical reaction operations and a lost acknowledgement are idempotent
   ---
-  duration_ms: 39.089458
+  duration_ms: 36.683875
   type: 'test'
   ...
 # Subtest: new guests see reply references without receiving the earlier message or its reactions
 ok 57 - new guests see reply references without receiving the earlier message or its reactions
   ---
-  duration_ms: 86.698417
+  duration_ms: 80.582416
   type: 'test'
   ...
 # Subtest: invalid drafts and forged or unavailable targets do not consume a lease or close the session
 ok 58 - invalid drafts and forged or unavailable targets do not consume a lease or close the session
   ---
-  duration_ms: 34.7585
+  duration_ms: 34.500875
   type: 'test'
   ...
 # Subtest: message views do not expose mutable internal reply or reaction state
 ok 59 - message views do not expose mutable internal reply or reaction state
   ---
-  duration_ms: 35.676084
+  duration_ms: 33.242125
   type: 'test'
   ...
 # Subtest: reply and reaction metadata never enter relay request fields or stored plaintext
 ok 60 - reply and reaction metadata never enter relay request fields or stored plaintext
   ---
-  duration_ms: 40.209125
+  duration_ms: 37.04775
   type: 'test'
   ...
 # Subtest: receiver rejects unsigned, altered and oversized interactions from an admitted peer
 ok 61 - receiver rejects unsigned, altered and oversized interactions from an admitted peer
   ---
-  duration_ms: 26.743166
+  duration_ms: 21.956625
   type: 'test'
   ...
 # Subtest: interaction projection has bounded history and no queue for missing targets
 ok 62 - interaction projection has bounded history and no queue for missing targets
   ---
-  duration_ms: 4.480333
+  duration_ms: 3.993458
   type: 'test'
   ...
 # Subtest: returning through the invitation reuses the live browser identity without a relay login
 ok 63 - returning through the invitation reuses the live browser identity without a relay login
   ---
-  duration_ms: 42.979917
+  duration_ms: 34.227125
   type: 'test'
   ...
 # Subtest: owner and mirrored tabs serialize sends and reactions through one MLS client
 ok 64 - owner and mirrored tabs serialize sends and reactions through one MLS client
   ---
-  duration_ms: 38.697292
+  duration_ms: 31.897791
   type: 'test'
   ...
 # Subtest: closing a mirrored view leaves the original session and keys active
 ok 65 - closing a mirrored view leaves the original session and keys active
   ---
-  duration_ms: 35.239834
+  duration_ms: 28.894459
   type: 'test'
   ...
 # Subtest: explicit End session in a mirror destroys the owner's keys and closes other views
 ok 66 - explicit End session in a mirror destroys the owner's keys and closes other views
   ---
-  duration_ms: 58.540792
+  duration_ms: 54.061666
   type: 'test'
   ...
 # Subtest: an altered invitation cannot discover a live browser session
 ok 67 - an altered invitation cannot discover a live browser session
   ---
-  duration_ms: 1534.093167
+  duration_ms: 1529.600458
   type: 'test'
   ...
 # Subtest: owner shutdown invalidates mirrored views and cannot be resumed from stale state
 ok 68 - owner shutdown invalidates mirrored views and cannot be resumed from stale state
   ---
-  duration_ms: 1563.6235
+  duration_ms: 1607.431917
   type: 'test'
   ...
 # Subtest: presence follows authenticated reads, times out, reconnects and disappears on logout
 ok 69 - presence follows authenticated reads, times out, reconnects and disappears on logout
   ---
-  duration_ms: 46.0115
+  duration_ms: 48.16025
   type: 'test'
   ...
 # Subtest: presence reveals no nicknames or signing fingerprints to the relay
 ok 70 - presence reveals no nicknames or signing fingerprints to the relay
   ---
-  duration_ms: 35.65375
+  duration_ms: 24.197875
   type: 'test'
   ...
 # Subtest: participant connection bindings cannot be copied from another signing identity
 ok 71 - participant connection bindings cannot be copied from another signing identity
   ---
-  duration_ms: 4.887167
+  duration_ms: 4.10575
   type: 'test'
   ...
 # Subtest: a validly signed duplicate transport binding is rejected before the write lease
 ok 72 - a validly signed duplicate transport binding is rejected before the write lease
   ---
-  duration_ms: 4.462208
+  duration_ms: 3.785042
   type: 'test'
   ...
 # Subtest: connection bindings are one-time and client views do not expose mutable profiles
 ok 73 - connection bindings are one-time and client views do not expose mutable profiles
   ---
-  duration_ms: 37.969375
+  duration_ms: 32.875667
   type: 'test'
   ...
 # Subtest: old relays without presence do not fabricate participant status
 ok 74 - old relays without presence do not fabricate participant status
   ---
-  duration_ms: 44.26325
+  duration_ms: 30.888416
   type: 'test'
   ...
 # Subtest: malformed or oversized presence snapshots fail closed before rendering
 ok 75 - malformed or oversized presence snapshots fail closed before rendering
   ---
-  duration_ms: 109.116083
+  duration_ms: 86.582125
   type: 'test'
   ...
 # Subtest: orphaned invitations reject new guests instead of leaving everyone waiting
 ok 76 - orphaned invitations reject new guests instead of leaving everyone waiting
   ---
-  duration_ms: 7.95875
+  duration_ms: 6.413
   type: 'test'
   ...
 # Subtest: a guest waiting when the last admitted participant leaves receives an explicit error
 ok 77 - a guest waiting when the last admitted participant leaves receives an explicit error
   ---
-  duration_ms: 8.045958
+  duration_ms: 6.116208
   type: 'test'
   ...
 # Subtest: silent abandoned sessions do not create a misleading new waiting guest
 ok 78 - silent abandoned sessions do not create a misleading new waiting guest
   ---
-  duration_ms: 35.28425
+  duration_ms: 28.707542
   type: 'test'
   ...
 # Subtest: the background session poller admits a guest while its document is hidden
 ok 79 - the background session poller admits a guest while its document is hidden
   ---
-  duration_ms: 70.066125
+  duration_ms: 50.368375
   type: 'test'
   ...
 # Subtest: poll wakeups do not overlap and teardown removes event listeners
 ok 80 - poll wakeups do not overlap and teardown removes event listeners
   ---
-  duration_ms: 6.830166
+  duration_ms: 5.513458
   type: 'test'
   ...
 # Subtest: SPA view detach and return retain identity, history and admission without a new login
 ok 81 - SPA view detach and return retain identity, history and admission without a new login
   ---
-  duration_ms: 57.466375
+  duration_ms: 40.377583
   type: 'test'
   ...
 # Subtest: invitations preserve the chat document path for same-tab hash navigation
 ok 82 - invitations preserve the chat document path for same-tab hash navigation
   ---
-  duration_ms: 35.498667
+  duration_ms: 29.69075
   type: 'test'
   ...
 # Subtest: send waits for another participant's write lease and delivers without manual retry
 ok 83 - send waits for another participant's write lease and delivers without manual retry
   ---
-  duration_ms: 330.972166
+  duration_ms: 445.505083
   type: 'test'
   ...
 # Subtest: background admission yields to a held lease without reporting a connection failure
 ok 84 - background admission yields to a held lease without reporting a connection failure
   ---
-  duration_ms: 66.434459
+  duration_ms: 68.302667
   type: 'test'
   ...
 # Subtest: ending the session while waiting for a lease cancels sending before encryption
 ok 85 - ending the session while waiting for a lease cancels sending before encryption
   ---
-  duration_ms: 351.948917
+  duration_ms: 370.030833
   type: 'test'
   ...
 # Subtest: four concurrent writers deliver once each without user retries
 ok 86 - four concurrent writers deliver once each without user retries
   ---
-  duration_ms: 521.291584
+  duration_ms: 986.615042
   type: 'test'
   ...
-1..86
-# tests 86
+# Subtest: saved sessions: reload retains nickname, fingerprint, history and the existing relay identity
+ok 87 - saved sessions: reload retains nickname, fingerprint, history and the existing relay identity
+  ---
+  duration_ms: 36.480209
+  type: 'test'
+  ...
+# Subtest: saved sessions: both browsers can close and resume the same conversation
+ok 88 - saved sessions: both browsers can close and resume the same conversation
+  ---
+  duration_ms: 32.55
+  type: 'test'
+  ...
+# Subtest: saved sessions: pending admission survives reload and consumes Welcome safely
+ok 89 - saved sessions: pending admission survives reload and consumes Welcome safely
+  ---
+  duration_ms: 19.598167
+  type: 'test'
+  ...
+# Subtest: saved sessions: accepted write interrupted before acknowledgement retries identical ciphertext once
+ok 90 - saved sessions: accepted write interrupted before acknowledgement retries identical ciphertext once
+  ---
+  duration_ms: 34.15175
+  type: 'test'
+  ...
+# Subtest: saved sessions: unsent journal resumes under a fresh lease without re-encryption
+ok 91 - saved sessions: unsent journal resumes under a fresh lease without re-encryption
+  ---
+  duration_ms: 28.399
+  type: 'test'
+  ...
+# Subtest: saved sessions: end session removes the checkpoint and revokes its transport
+ok 92 - saved sessions: end session removes the checkpoint and revokes its transport
+  ---
+  duration_ms: 27.029792
+  type: 'test'
+  ...
+# Subtest: saved sessions: storage failure prevents publishing ciphertext
+ok 93 - saved sessions: storage failure prevents publishing ciphertext
+  ---
+  duration_ms: 24.571834
+  type: 'test'
+  ...
+# Subtest: saved sessions: expiry and wrong signing keys cannot restore a checkpoint
+ok 94 - saved sessions: expiry and wrong signing keys cannot restore a checkpoint
+  ---
+  duration_ms: 24.64525
+  type: 'test'
+  ...
+# Subtest: saved vault: AES-GCM hides text and rejects modified ciphertext, context and key
+ok 95 - saved vault: AES-GCM hides text and rejects modified ciphertext, context and key
+  ---
+  duration_ms: 27.729708
+  type: 'test'
+  ...
+# Subtest: saved sessions: reload between durable Welcome and its ACK remains ready
+ok 96 - saved sessions: reload between durable Welcome and its ACK remains ready
+  ---
+  duration_ms: 22.089042
+  type: 'test'
+  ...
+# Subtest: saved sessions: interrupted admission commit restores the existing members and guest
+ok 97 - saved sessions: interrupted admission commit restores the existing members and guest
+  ---
+  duration_ms: 28.580541
+  type: 'test'
+  ...
+# Subtest: saved sessions: temporary relay outage keeps the local checkpoint for another attempt
+ok 98 - saved sessions: temporary relay outage keeps the local checkpoint for another attempt
+  ---
+  duration_ms: 28.367417
+  type: 'test'
+  ...
+# Subtest: saved sessions: expired relay session removes the local checkpoint without recreating a room
+ok 99 - saved sessions: expired relay session removes the local checkpoint without recreating a room
+  ---
+  duration_ms: 25.694833
+  type: 'test'
+  ...
+# Subtest: HTTP transport: interrupted streams and invalid JSON remain recoverable gateway errors
+ok 100 - HTTP transport: interrupted streams and invalid JSON remain recoverable gateway errors
+  ---
+  duration_ms: 0.842125
+  type: 'test'
+  ...
+1..100
+# tests 100
 # suites 0
-# pass 86
+# pass 100
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 10814.049667
+# duration_ms 11308.737459
