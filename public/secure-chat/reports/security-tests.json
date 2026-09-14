@@ -1,10 +1,10 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T19:10:40.981Z",
+  "generatedAt": "2026-09-14T20:46:50.181Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
   "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "7dbb1a9f2cd88e0286e10298150169b0737b600e",
+  "gitHead": "95ad2be5a20c3cdc086fec09d100e383f5bbfc4c",
   "sourceSha256": {
     "lib/secure-chat-protocol.ts": "ea0ad4ab25670df049c420e853914f36e661fb0bd415eeb1aaa02ccf5b893ed9",
     "lib/secure-chat-invite.ts": "f487dff425901c461ac96dc59a867f3a281145dad55b6173f6532b79806b75fe",
@@ -16,18 +16,18 @@
     "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
     "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
     "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
-    "lib/secure-chat-v2.test.mjs": "9fbd50887155f0ae51850c7f320d83c6f6d3c914a067b37e7935bf92eda5e47f",
+    "lib/secure-chat-v2.test.mjs": "43f22f9731240ca716e08f37f595cd90970e4e60346cd42b28f3196d7504179c",
     "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
     "package-lock.json": "fda4f1d4c21d65f86b19fa4031f947619e385b24b9a5d6f55c82ce1ee7e552f7",
     "lib/secure-chat-interactions.ts": "dedb9a21a8b81af84ed96def3100d1c44156de87ca048bc53026dcabaf48d213",
-    "lib/secure-chat-session.ts": "6008f0f8e9777f573f4861fdb2bed935bc3ad8150f8ba22ad0ec20a4ee579ed9",
+    "lib/secure-chat-session.ts": "78f948468b4638a7806de917c5bdfcab9e2c3c9e8c2498e2b201d81623245506",
     "lib/secure-chat-runtime.ts": "af99e847ee6c3cb1e345c35ab96efb55a7c935f9e70296fff450f76eaa129e24",
     "lib/secure-chat-polling.ts": "543a3a3e6886bbf553aae7848987d75e839c4edd5943cf08ba66cc4c3b2082f6",
     "lib/secure-chat-vault.ts": "7d89ebd6e9d79b03d65066cbdd15b78fd154eb49455c6c55d212187c05ee2d18",
     "lib/secure-chat-browser-session.ts": "7c9acd3902aaf2b9538ae1b2157893c35c4acbd343f18f72d58e1c9a9d54cdc6"
   },
   "passed": true,
-  "total": 113,
+  "total": 114,
   "results": [
     {
       "suite": "Production integration and hostile inputs",
@@ -449,6 +449,10 @@
         },
         {
           "name": "durable outbox: interrupted refresh does not end the participant",
+          "passed": true
+        },
+        {
+          "name": "mirrored tabs do not multiply relay polling or exhaust the owner's read quota",
           "passed": true
         }
       ],

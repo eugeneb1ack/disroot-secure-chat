@@ -10,6 +10,7 @@ import { invitationLink, type ChatInvitation } from "@/lib/secure-chat-invite";
 import { ChatMessage } from "./chat-message";
 import { ChatComposer } from "./chat-composer";
 import { findMessage } from "@/lib/secure-chat-interactions";
+import { ChatPopover } from "./chat-popover";
 import { ChatParticipants } from "./chat-participants";
 
 function IdentityGate({ onConnect, invited, onStartNew }: { onConnect: (nickname: string, name: string) => Promise<void>; invited: boolean; onStartNew: () => void }) {
@@ -58,6 +59,8 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
   const [replyTo, setReplyTo] = useState<MessageReference>();
   const [inviteLink, setInviteLink] = useState("");
   const [showInvite, setShowInvite] = useState(false);
+  const guideButtonRef = useRef<HTMLButtonElement>(null);
+  const inviteButtonRef = useRef<HTMLButtonElement>(null);
   const clientRef = useRef<ChatSession | null>(null);
   const generation = useRef(0);
   const messagesRef = useRef<HTMLDivElement>(null);
@@ -192,12 +195,12 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
     }
   }, [lastMessage]);
 
-  return <div className={`chat-workspace chat-single-conversation${!view ? " is-starting" : ""}${showGuide ? " has-guide" : ""}`}>
+  return <div className={`chat-workspace chat-single-conversation${!view ? " is-starting" : ""}`}>
     <section className="chat-conversation" aria-label={roomName} lang={language}>
-      <header className="chat-room-header"><div><h3><span aria-hidden="true">#</span> {roomName}</h3><p>{view ? `${count} ${participantLabel} · ${connected ? t("encrypted connection", "зашифрованное соединение") : t("reconnecting…", "восстанавливаем связь…")}` : t("No account. Private. Anonymous.", "Без аккаунта. Приватно. Анонимно.")}</p></div><div className="chat-room-tools"><button className="chat-button chat-guide-toggle" type="button" aria-expanded={showGuide} aria-controls="chat-guide-panel" onClick={() => setShowGuide(current => !current)}>{t("How it works", "Как это работает")} <span aria-hidden="true">{showGuide ? "−" : "+"}</span></button></div></header>
+      <header className="chat-room-header"><div><h3><span aria-hidden="true">#</span> {roomName}</h3><p>{view ? `${count} ${participantLabel} · ${connected ? t("encrypted connection", "зашифрованное соединение") : t("reconnecting…", "восстанавливаем связь…")}` : t("No account. Private. Anonymous.", "Без аккаунта. Приватно. Анонимно.")}</p></div><div className="chat-room-tools"><button className="chat-button chat-guide-toggle" ref={guideButtonRef} type="button" aria-haspopup="dialog" aria-expanded={showGuide} aria-controls="chat-guide-panel" onClick={() => setShowGuide(current => !current)}>{t("How it works", "Как это работает")} <span aria-hidden="true">{showGuide ? "−" : "+"}</span></button></div></header>
       {!view ? <div className="chat-gate-scroll">{invitation && <div className="chat-invitation-banner"><strong>{t("Private invitation.", "Приватное приглашение.")}</strong><p>{t("Create a key to join this room.", "Создайте ключ, чтобы войти в беседу.")}</p></div>}{error && <p className="chat-error" role="alert">{chatError(error, language)}</p>}{resuming ? <p className="chat-loading" role="status">{t("Looking for your open session…", "Ищем вашу открытую сессию…")}</p> : <IdentityGate key={invitation ? "invited" : "new"} onConnect={connect} invited={!!invitation} onStartNew={onInvitationConsumed} />}</div> : <>
-        <div className="chat-room-notice chat-pinned-invite"><div><strong>{t("24 HOURS. THEN GONE.", "24 ЧАСА. ПОТОМ ВСЁ ИСЧЕЗНЕТ.")}</strong><small>{t("Ends", "До")} {new Intl.DateTimeFormat(dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(view!.expires))} · {t("shared deadline", "единый срок")}</small></div><button type="button" className="chat-button" aria-expanded={showInvite} onClick={() => setShowInvite(current => !current)}>{t("Invite friends", "Пригласить друзей")} {showInvite ? "−" : "↗"}</button></div>
-        {showInvite && <div className="chat-invite-scroll"><ChatInviteLink link={inviteLink} /></div>}
+        <div className="chat-room-notice chat-pinned-invite"><div><strong>{t("24 HOURS. THEN GONE.", "24 ЧАСА. ПОТОМ ВСЁ ИСЧЕЗНЕТ.")}</strong><small>{t("Ends", "До")} {new Intl.DateTimeFormat(dateLocale, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }).format(new Date(view!.expires))} · {t("shared deadline", "единый срок")}</small></div><button type="button" className="chat-button" ref={inviteButtonRef} aria-haspopup="dialog" aria-controls="chat-invite-panel" aria-expanded={showInvite} onClick={() => setShowInvite(current => !current)}>{t("Invite friends", "Пригласить друзей")} {showInvite ? "−" : "↗"}</button></div>
+        {showInvite && <ChatPopover id="chat-invite-panel" label={t("Invite friends", "Пригласить друзей")} anchor={inviteButtonRef} onClose={() => setShowInvite(false)}><ChatInviteLink link={inviteLink} /></ChatPopover>}
         <ChatParticipants view={view} connected={connected} />
         <div className="chat-messages" ref={messagesRef} role="log" aria-label={t("Encrypted messages", "Зашифрованные сообщения")} aria-live="polite" aria-relevant="additions" onScroll={event => { const target = event.currentTarget; nearBottom.current = target.scrollHeight - target.scrollTop - target.clientHeight < 80; }}>
           {!messages.length && !view.pendingMessage && <div className="chat-empty"><span className="chat-empty-symbol" aria-hidden="true">[ … ]</span><p className="chat-eyebrow">{t("ENCRYPTED CHANNEL", "ЗАШИФРОВАННЫЙ ЧАТ")}</p><h3>{view.ready ? t("No messages yet.", "Сообщений пока нет.") : t("Connecting your keys…", "Подключаем ваши ключи…")}</h3><small>{view.ready ? t("Share the invitation. Your friends join with their own keys.", "Отправьте ссылку друзьям. Они войдут со своими ключами.") : view.presence?.available === 0 ? t("No connected participant yet. Ask your friend to reopen this link in their usual browser.", "Пока никто не на связи. Попросите друга открыть эту ссылку в привычном браузере.") : t("An online participant is connecting you. Keep this tab open.", "Участник онлайн подключает вас. Оставьте вкладку открытой.")}</small></div>}
@@ -213,6 +216,6 @@ export function ChatWindow({ invitation, onInvitationConsumed }: { invitation: C
         <ChatComposer draft={draft} setDraft={setDraft} reply={replyTo ? findMessage(messages, replyTo) : undefined} onCancelReply={() => setReplyTo(undefined)} onSend={send} onEnd={() => void newConversation()} identity={view.identity} ready={view.ready} connected={connected} busy={busy || !!view.deliveryPending} error={error} />
       </>}
     </section>
-    {showGuide && <aside id="chat-guide-panel" className="chat-guide-panel"><ChatGuide /></aside>}
+    {showGuide && <ChatPopover id="chat-guide-panel" label={t("How it works", "Как это работает")} anchor={guideButtonRef} onClose={() => setShowGuide(false)}><ChatGuide /></ChatPopover>}
   </div>;
 }

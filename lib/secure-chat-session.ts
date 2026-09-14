@@ -25,6 +25,11 @@ export function ownChatSession(client: SecureChatClient, releaseWriter?: () => v
   const invite = client.invitation;
   const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel(sessionName(invite)) : undefined;
   let stopped = false, pending = 0;
+  let pollingError: unknown;
+  const poll = async () => {
+    try { await client.poll(); pollingError = undefined; }
+    catch (error) { pollingError = error; throw error; }
+  };
   const close = () => {
     if (stopped) return;
     stopped = true; channel?.postMessage({ ended: true }); channel?.close();
@@ -38,7 +43,10 @@ export function ownChatSession(client: SecureChatClient, releaseWriter?: () => v
     pending++;
     try {
       if (command.method === "close") { close(); return; }
-      if (command.method === "poll") await client.poll();
+      // The owner already runs the sole network polling loop. Each mirror asks
+      // for its verified view; polling again here multiplies reads per tab and
+      // can exhaust the owner's quota, disabling sends in every mirrored view.
+      if (command.method === "poll" && pollingError) throw pollingError;
       if (command.method === "send") await client.send(command.body!, command.target);
       if (command.method === "react") await client.react(command.target!, command.emoji!);
       if (!stopped) channel.postMessage({ id: command.id, view: client.view, closed: client.closed });
@@ -48,7 +56,7 @@ export function ownChatSession(client: SecureChatClient, releaseWriter?: () => v
   };
   return {
     get view() { return client.view; }, get invitation() { return client.invitation; }, get closed() { return client.closed; }, mirrored: false,
-    poll: () => client.poll(), send: (body, target) => client.send(body, target), react: (target, emoji) => client.react(target, emoji), close,
+    poll, send: (body, target) => client.send(body, target), react: (target, emoji) => client.react(target, emoji), close,
     detach: () => { if (!releaseWriter) { close(); return; } if (!stopped) { stopped = true; channel?.close(); client.suspend(); releaseWriter(); } },
   };
 }
