@@ -22,7 +22,8 @@ keys + plaintext  ── MLS ──►  ciphertext + routing  ── MLS ──�
 - Serialized writes, identical-ciphertext retries, and session destruction on an unresolved encrypted write.
 - One shared deadline, at most 16 members. Bounded RAM-only relay storage; no chat database or disk archive.
 - Separate non-root relay container: read-only filesystem, no published port, no site secrets, no ordinary Internet egress, bounded memory/CPU/processes.
-- Responsive messenger, emoji picker, reduced-motion support and English/Russian Security Review.
+- Responsive EN/RU messenger with a growing composer, emoji picker, encrypted replies/reactions and reduced-motion support.
+- Reuse a live session across tabs of the same browser profile and origin; one original tab owns the keys and serializes all MLS writes.
 - Optional Tor v3 onion gateway on the same host. The Tor service identity persists; chat state does not.
 
 ## Run locally
@@ -57,8 +58,8 @@ The optional Tor unit and torrc are examples for a Debian/Ubuntu host with Tor a
 
 This is a technical self-review, **not an independent audit**. The selected suite is classical, not post-quantum. We do not claim equivalence or superiority to Signal. A compromised website or device can read live plaintext and keys. A malicious relay or invited member can disrupt service. A stolen participant state requires an honest update by that participant after the attacker loses access. JavaScript cannot guarantee physical memory erasure or delete recipient copies. HTTPS exposes the peer address to the endpoint; Tor changes that network relationship without eliminating traffic-analysis risks.
 
-The shared deadline cannot be extended. Closing or reloading the tab loses its keys sooner. A returning visitor is a new temporary identity. Do not reuse a sensitive identity based only on a familiar nickname; compare full fingerprints independently.
+The shared deadline cannot be extended. Opening your invitation in the same browser reuses the original tab while it remains open. Closing or reloading the original tab loses its keys sooner; only then does a returning visitor need a new temporary identity. Do not reuse a sensitive identity based only on a familiar nickname; compare full fingerprints independently.
 
 Questions or private security reports: [Telegram DM](https://t.me/mailsec).
 
-[Production verification / Проверка после выкладки](docs/deployment-verification.md).
+[Messenger release verification / Проверка обновления](docs/secure-chat-messenger-release.md) · [Initial production deployment](docs/deployment-verification.md).
