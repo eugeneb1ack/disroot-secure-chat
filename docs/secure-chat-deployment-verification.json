@@ -1,0 +1,86 @@
+{
+  "schema": "disroot-chat-deployment-checks/v1",
+  "checkedAt": "2026-09-14T14:37:17.627542+00:00",
+  "deployedSiteRevision": "1042d0b5dff43c69ecf187e3ab54629b5cb5da5f",
+  "publicCoreRevision": "9953c8cbebca7c71dc473f5f2a83a4fa375efc12",
+  "https": {
+    "passed": true,
+    "checkedAt": "2026-09-14T14:27:46.852Z",
+    "origin": "https://disroot.website",
+    "checks": [
+      "HTTP challenge, authentication, encrypted admission, creator retained",
+      "Bidirectional MLS text and emoji",
+      "Non-founder admission, third client, no pre-join history",
+      "Cross-origin rejection and no-store API responses"
+    ]
+  },
+  "tor": {
+    "passed": true,
+    "checkedAt": "2026-09-14T14:34:12.963Z",
+    "origin": "http://xr7ycwzb7hd2xmxtdvfdf5rdrmm2yq4ewiqhc6vvn4bgvb7pxdc4sgad.onion",
+    "checks": [
+      "HTTP challenge, authentication, encrypted admission, creator retained",
+      "Bidirectional MLS text and emoji",
+      "Non-founder admission, third client, no pre-join history",
+      "Cross-origin rejection and no-store API responses"
+    ]
+  },
+  "isolation": {
+    "image": "disrootsite:1042d0b-amd64",
+    "web_healthy": true,
+    "relay_healthy": true,
+    "container_restarts": [
+      0,
+      0
+    ],
+    "relay_internal_only": true,
+    "relay_nonroot_readonly_no_mounts_no_ports": true,
+    "web_and_relay_logging_disabled": true,
+    "no_swap": true,
+    "cohosted_services_unchanged": true,
+    "original_data_files_present": 9,
+    "data_files_unchanged": 8,
+    "data_files_changed_by_existing_writers": 1,
+    "onion_site_apis_blocked": true,
+    "nginx_valid": true
+  },
+  "relayEgressProbe": {
+    "blocked": true,
+    "result": "ENETUNREACH"
+  },
+  "dependencyAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "browser": {
+    "engine": "Codex in-app Chromium",
+    "desktop": [
+      1280,
+      720
+    ],
+    "mobile": [
+      390,
+      844
+    ],
+    "mobileDocumentWidth": 390,
+    "twoParticipants": true,
+    "creatorStaysInChat": true,
+    "unicodeAndEmojiBidirectional": true,
+    "emojiPicker": true,
+    "reloadDiscardsSession": true,
+    "securityEnglishRussian": true,
+    "navigationNoChatLabel": true,
+    "consoleErrors": 0
+  },
+  "ci": "https://github.com/eugeneb1ack/disroot-secure-chat/actions/runs/34855221736",
+  "limits": [
+    "Technical self-review, not an independent audit or penetration test.",
+    "Tor transport exercised actual client cryptography through a separate Tor client, not the Tor Browser UI.",
+    "An initial post-release Tor attempt was interrupted when its test SSH tunnel closed; it passed after restoring the tunnel.",
+    "24-hour expiry uses an injected clock in tests, not a day-long endurance run."
+  ]
+}

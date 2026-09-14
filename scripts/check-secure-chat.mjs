@@ -15,7 +15,7 @@ async function request(path, action, token, requestOrigin = origin) {
     const child = spawn("curl", ["--config", "-"], { stdio: ["pipe", "pipe", "pipe"] });
     const chunks = []; let bytes = 0;
     child.stdout.on("data", value => { bytes += value.length; if (bytes > 3_000_000) child.kill(); else chunks.push(value); });
-    child.stderr.resume(); child.on("error", reject); child.on("exit", code => code === 0 ? resolve(Buffer.concat(chunks).toString()) : reject(new Error("Test transport failed.")));
+    child.stderr.resume(); child.on("error", reject); child.on("exit", code => code === 0 ? resolve(Buffer.concat(chunks).toString()) : reject(new Error(`Test transport failed (curl ${code}, ${action?.action ?? "snapshot"}).`)));
     child.stdin.end(config + "\n");
   });
   const split = raw.indexOf("\r\n\r\n"), head = raw.slice(0, split).split("\r\n"), status = Number(head.shift().split(" ")[1]);

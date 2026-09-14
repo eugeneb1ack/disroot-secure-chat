@@ -60,3 +60,5 @@ This is a technical self-review, **not an independent audit**. The selected suit
 The shared deadline cannot be extended. Closing or reloading the tab loses its keys sooner. A returning visitor is a new temporary identity. Do not reuse a sensitive identity based only on a familiar nickname; compare full fingerprints independently.
 
 Questions or private security reports: [Telegram DM](https://t.me/mailsec).
+
+[Production verification / Проверка после выкладки](docs/deployment-verification.md).
