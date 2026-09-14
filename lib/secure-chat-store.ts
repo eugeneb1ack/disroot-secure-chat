@@ -85,6 +85,8 @@ export class SecureChatStore {
       if (challenge.expires <= this.now()) throw new ChatError("Sign-in challenge expired.", 403);
       const { request, capHash } = challenge;
       if (this.keyBindings.has(challenge.key)) throw new ChatError("This key already belongs to a conversation.", 409);
+      // Verification yields: recheck global limits before allocating a room.
+      if (this.sessions.size >= 256 || this.keyBindings.size >= 512) throw new ChatError("The relay is at capacity.", 429);
       let room = this.rooms.get(request.room);
       if (request.create) {
         if (room) throw new ChatError("Conversation already exists.", 409);
@@ -92,7 +94,7 @@ export class SecureChatStore {
         room = { expires: request.expires, capHash, manifest: request.manifest!, seq: 0, events: [], bytes: 0, members: new Set(), pending: new Map() };
         this.rooms.set(request.room, room);
       } else if (!room || room.expires !== request.expires || !equal(room.capHash, capHash)) throw new ChatError("Conversation expired.", 403);
-      if (room.members.size >= MAX_MEMBERS || this.sessions.size >= 256 || this.keyBindings.size >= 512) throw new ChatError("Conversation is at capacity.", 429);
+      if (room.members.size >= MAX_MEMBERS) throw new ChatError("Conversation is at capacity.", 429);
       const token = random(), tokenHash = hash(token), sessionId = randomBytes(16).toString("hex");
       this.sessions.set(tokenHash, { id: sessionId, room: request.room, ready: request.create, expires: request.expires, ...(!request.create ? { admissionExpires: Math.min(this.now() + 120_000, request.expires) } : {}), sent: [], reads: [] });
       room.members.add(tokenHash); this.keyBindings.set(challenge.key, { room: request.room, expires: request.expires });

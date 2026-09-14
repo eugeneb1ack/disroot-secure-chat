@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T13:46:20.596Z
+Generated: 2026-09-14T14:20:53.805Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**61 checks; PASSED. Technical self-review, not an independent audit.**
+**62 checks; PASSED. Technical self-review, not an independent audit.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -31,6 +31,7 @@ Exit: 0. [Raw TAP output](integration.tap).
 - PASS — login challenge binds the browser origin
 - PASS — private transport JWK fields are rejected before importing a key
 - PASS — a transport key cannot create a second conversation
+- PASS — concurrent authentication at the binding limit leaves no orphan conversations
 - PASS — wrong invitation capability and extended deadline cannot join
 - PASS — 24-hour cleanup removes room, messages, sessions, pending joins and bindings
 - PASS — join and key updates do not extend the shared deadline

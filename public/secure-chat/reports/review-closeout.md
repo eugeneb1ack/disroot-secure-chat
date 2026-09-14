@@ -17,6 +17,10 @@ The pre-release review reported five medium-severity issues and one low-severity
 | Global capacity was checked before evicting old events | Compute eviction before capacity admission; reserve at most 1,000,000 encoded event characters per conversation | Fill all 16 relay windows to the 16,000,000-character limit and continue replacing events for 40 rounds. |
 | The pinned library's zero-epoch-retention setting retained historical state | A small adapter clones only current-epoch data, empties historical state and wipes disposable source buffers | Reject withheld prior-epoch ciphertext after refresh; verify the retained copy has no old epochs and does not alias wiped live buffers. Compromise fixtures use the same adapter. |
 
+## Additional pre-release correction
+
+A later capacity-race regression reproduced orphan conversation allocation when concurrent valid authentications crossed the 512-binding limit. Global limits are now rechecked after asynchronous signature verification and before any room allocation. The regression fills 511 bindings through real sign-in/logout calls and races three new conversations: exactly one succeeds, and no empty room remains.
+
 ## Additional checks
 
 The linked report runs the actual client/store/handler integration and separate MLS compromise fixtures. It includes 16 real participants, concurrent sends and admissions, lost acknowledgements, fail-closed uncertain publication, challenge replay, Origin enforcement, private-JWK rejection, nickname collisions, context binding, tampering, parser bounds, key cleanup and the shared deadline. Bounded negative-input tests use 256 malformed packets and 32 ciphertext mutations. They are not an exhaustive fuzzer.
@@ -26,6 +30,8 @@ The compromise tests deliberately preserve a stolen-state copy. They demonstrate
 ## Русский
 
 Проверена предварительная версия клиентского протокола и relay. Найдено шесть проблем: подмена исходной группы, повторная упаковка чужого подписанного текста, отключение участника повреждённым KeyPackage, утечка незавершённых мест, блокировка записи при заполнении общего лимита и фактическое сохранение старых эпох библиотекой. Все шесть исправлены и покрыты отдельными повторными проверками до публикации.
+
+Дополнительно воспроизведена гонка на пределе 512 привязок ключей: отклонённый вход мог оставить пустую беседу. Повторная проверка общих квот теперь выполняется после асинхронной проверки подписи, до создания беседы. Тест заполняет 511 привязок реальными входами и выходами, затем одновременно создаёт три беседы: успешна только одна, пустых записей нет.
 
 Область проверки ограничена: 12 из 31 файла `lib/`, относящиеся к чату; это не аудит всего сайта. HTTP, браузер и конфигурация проверяются отдельно. Полный список выполненных тестов, дата, среда и SHA-256 исходников доступны в [отчёте](security-tests.json). Ускоренная проверка 24 часов использует тестовые часы, а не суточное ожидание. Отчёт не заменяет независимый аудит и не гарантирует отсутствие остальных уязвимостей.
 

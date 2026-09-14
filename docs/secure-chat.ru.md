@@ -1,6 +1,6 @@
 # Secure Chat — протокол и развёртывание
 
-[English](secure-chat.md) · [Security test report](../public/secure-chat/reports/security-tests.md) · [Review and remediation](../public/secure-chat/reports/review-closeout.md)
+[English](secure-chat.md) · [Security test report](../public/secure-chat/reports/security-tests.md) · [Browser and transport checks](../public/secure-chat/reports/release-checks.md) · [Review and remediation](../public/secure-chat/reports/review-closeout.md)
 
 Одна ссылка, одна беседа, до 24 часов. Текст и эмодзи. Ключи создаёт браузер. Без аккаунтов, администраторов, вложений, архива и восстановления.
 
@@ -88,8 +88,8 @@ npm run test:chat:report
 npm run lint
 npm run build
 # Isolated local preview:
-CHAT_LOCAL_PREVIEW=1 docker compose up -d --build
-CHAT_TEST_ORIGIN=http://127.0.0.1:3000 node --experimental-strip-types scripts/check-secure-chat.mjs
+APP_PORT=3001 docker compose -f docker-compose.yml -f docker-compose.chat-local.yml up -d --build disrootsite
+CHAT_TEST_ORIGIN=http://127.0.0.1:3001 node --experimental-strip-types scripts/check-secure-chat.mjs
 ```
 
 HTTP-проверка создаёт три временных тестовых ключа. Служебного обхода очистки нет: её зашифрованное состояние истекает обычным способом. Отчёт отличает перевод тестовых часов от реального суточного прогона.

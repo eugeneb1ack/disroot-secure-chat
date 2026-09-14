@@ -1,27 +1,27 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T13:46:20.596Z",
+  "generatedAt": "2026-09-14T14:20:53.805Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
   "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "",
+  "gitHead": "c9629599e6b808a632684bead8d5540bc24bf0f1",
   "sourceSha256": {
     "lib/secure-chat-protocol.ts": "17e2b49cad8262f68307f56c136b55833ce17e9c1ee48ab49395850db74b5261",
     "lib/secure-chat-invite.ts": "d446fe4d2c98b924313f5bce3f98975a7b05abb35306239851f2bc66244d7c3c",
     "lib/secure-chat-mls.ts": "463f26c1d170382adc9183b6a454a83915bd51538b0f03bc6d8378cde29aee1a",
     "lib/secure-chat-mls-adapter.ts": "32545ce180774d80daf5aaf112ed554dbdc9a0b99b3736abd4e9d94c0572c46b",
     "lib/secure-chat-client.ts": "3d2685246bfe39886fe4943a5088e6fbaadb06a3467a134091c9360b2b22936d",
-    "lib/secure-chat-store.ts": "9acaeff37f65c42cb8d3fb40b420d6077d3e88ca86962feb6fb9a63209876a05",
+    "lib/secure-chat-store.ts": "8b39e94fef8df0ec944c0e69b49bb145351a3fde0491a258ebf3cc1fc2bc8b9c",
     "lib/secure-chat-handler.ts": "ba989b31d21e67d0d20a80031c5cc30fe7b7a56625d43c027f7a2ef9414d5b6d",
     "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
     "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
     "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
-    "lib/secure-chat-v2.test.mjs": "1c6a8e90e6f5c57a5e4dc6de1488275b3be7b4a5dfa4440bea5325cf82f6ef52",
+    "lib/secure-chat-v2.test.mjs": "913a011cc24636ce49b6ce192fce279e1d08844a23f97db8e85fff398cb731f7",
     "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
     "package-lock.json": "dff6b582344010d2207e57c8d67781ff16fadc6d6e519a460cac48e6a9d332dd"
   },
   "passed": true,
-  "total": 61,
+  "total": 62,
   "results": [
     {
       "suite": "Production integration and hostile inputs",
@@ -95,6 +95,10 @@
         },
         {
           "name": "a transport key cannot create a second conversation",
+          "passed": true
+        },
+        {
+          "name": "concurrent authentication at the binding limit leaves no orphan conversations",
           "passed": true
         },
         {
