@@ -30,6 +30,7 @@ export function ChatLanguageSwitch() {
 }
 
 const errors: Record<string, string> = {
+  "The conversation is busy. Your message was not sent. Try again shortly.": "Беседа пока занята. Отправка не выполнена. Повторите чуть позже.",
   "No participant is online. Ask your friend to open the original chat tab, then retry.": "Сейчас никто не онлайн. Попросите друга открыть исходную вкладку чата и повторите вход.",
   "No participant can open this conversation anymore. Create a new conversation and share its new link.": "В этой беседе больше не осталось активных ключей для подключения. Создайте новую беседу и отправьте новую ссылку.",
   "Invalid participant connection state.": "Не удалось проверить данные подключения участников.",

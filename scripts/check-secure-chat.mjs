@@ -55,6 +55,11 @@ try {
   await b.send("Reply after admission", target); await a.poll(); await c.poll();
   assert.deepEqual(c.view.messages.at(-1).replyTo, target); assert.equal(c.view.messages.some(message => message.id === target.id), false);
   results.push("Replies do not disclose pre-join message content to a new guest");
+  await Promise.all(clients.map((client, index) => client.send(`Concurrent HTTP writer ${index}`)));
+  for (const client of clients) {
+    await client.poll(); assert.equal(client.view.messages.filter(message => message.body.startsWith("Concurrent HTTP writer ")).length, 3);
+  }
+  results.push("Three simultaneous HTTP writers deliver exactly once without manual retries");
   const denied = await request("/api/secure-chat", { action: "challenge" }, undefined, "https://invalid.example");
   assert.equal(denied.status, 403); results.push("Cross-origin rejection and no-store API responses");
   if (process.env.CHAT_TEST_REQUIRE_PRESENCE === "1") {

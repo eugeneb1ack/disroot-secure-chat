@@ -1,22 +1,22 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T17:15:25.652Z",
+  "generatedAt": "2026-09-14T17:25:07.460Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
   "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "f340edd0b429414fd186e8660ae3261b62cf18b1",
+  "gitHead": "6ed689c5a299b1b441bd0b4db451620a09e7afa4",
   "sourceSha256": {
     "lib/secure-chat-protocol.ts": "5ca5ee1162c36e8da10ce167ca962d0bb4339a66c4fff14bbf8254bd480941e9",
     "lib/secure-chat-invite.ts": "446c4c064e3fa00871eb255d92fedad0b257e1820d1bbd38eb2787fde67a6b46",
     "lib/secure-chat-mls.ts": "c110849ee10651229d1138315c92b691522a9956eafc9001f0b86365e0d7e923",
     "lib/secure-chat-mls-adapter.ts": "32545ce180774d80daf5aaf112ed554dbdc9a0b99b3736abd4e9d94c0572c46b",
-    "lib/secure-chat-client.ts": "0ed2127bc4149239797251239ba4d9bb1d7b0eb89ee60f77f0214aeffdaa3bd0",
+    "lib/secure-chat-client.ts": "d9110c980c4df264bf30a044155487eeb65d871b0ae10afeafdde1ae10e65641",
     "lib/secure-chat-store.ts": "8a3a13816ed4c6af6d6f6240493f0acc65dd0da2089eac2a9e393f1c42221918",
     "lib/secure-chat-handler.ts": "ba989b31d21e67d0d20a80031c5cc30fe7b7a56625d43c027f7a2ef9414d5b6d",
     "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
     "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
     "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
-    "lib/secure-chat-v2.test.mjs": "264b403b925932fadac76c8a26b70b8112c082ea5ee601bc4d55b3d906d1cf52",
+    "lib/secure-chat-v2.test.mjs": "a49af10dfec0071fa89017c4a62eb483b2a32f2b4514cb466d91f6531e81b05f",
     "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
     "package-lock.json": "fda4f1d4c21d65f86b19fa4031f947619e385b24b9a5d6f55c82ce1ee7e552f7",
     "lib/secure-chat-interactions.ts": "dedb9a21a8b81af84ed96def3100d1c44156de87ca048bc53026dcabaf48d213",
@@ -25,7 +25,7 @@
     "lib/secure-chat-polling.ts": "543a3a3e6886bbf553aae7848987d75e839c4edd5943cf08ba66cc4c3b2082f6"
   },
   "passed": true,
-  "total": 91,
+  "total": 95,
   "results": [
     {
       "suite": "Production integration and hostile inputs",
@@ -359,6 +359,22 @@
         },
         {
           "name": "invitations preserve the chat document path for same-tab hash navigation",
+          "passed": true
+        },
+        {
+          "name": "send waits for another participant's write lease and delivers without manual retry",
+          "passed": true
+        },
+        {
+          "name": "background admission yields to a held lease without reporting a connection failure",
+          "passed": true
+        },
+        {
+          "name": "ending the session while waiting for a lease cancels sending before encryption",
+          "passed": true
+        },
+        {
+          "name": "four concurrent writers deliver once each without user retries",
           "passed": true
         }
       ],

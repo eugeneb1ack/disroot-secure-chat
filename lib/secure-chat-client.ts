@@ -114,17 +114,28 @@ export class SecureChatClient {
     }
     return snapshot;
   }
-  async #claim() {
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const snapshot = await this.#pull();
-      if (this.#seq !== snapshot.seq) continue;
+  async #claim(wait = true) {
+    const deadline = Date.now() + 25_000;
+    let conflicts = 0;
+    for (let attempt = 0; attempt < 32; attempt++) {
       try {
+        const snapshot = await this.#pull();
+        if (this.#seq !== snapshot.seq) continue;
         const lease = await this.#api<{ id: string; expires: number }>({ action: "claim", seq: this.#seq });
         if (!/^[0-9a-f]{64}$/.test(lease.id) || lease.expires <= Date.now() + 1500 || lease.expires > Date.now() + 20_000) throw new ChatApiError("Write window is too short. Retry.", 409);
         return lease;
-      } catch (error) { if (!(error instanceof ChatApiError) || error.status !== 409) throw error; }
+      } catch (error) {
+        if (!(error instanceof ChatApiError) || ![409, 429].includes(error.status)) throw error;
+        // Background key refresh/admission yields immediately to another writer.
+        // A user's send waits before encryption, including an abandoned 20s lease.
+        if (!wait) return null;
+        const jitter = crypto.getRandomValues(new Uint32Array(1))[0] % 200;
+        const delay = Math.min(200 * 2 ** Math.min(conflicts++, 4), 1500) + jitter;
+        if (Date.now() + delay >= deadline) break;
+        await new Promise(resolve => setTimeout(resolve, delay)); this.#check();
+      }
     }
-    throw new ChatApiError("Another participant is updating the conversation. Retry in a moment.", 409);
+    throw new ChatApiError("The conversation is busy. Your message was not sent. Try again shortly.", 409);
   }
   async #publish(id: string, lease: string, packet: PreparedPacket, join?: string) {
     const command = { action: "publish", id, lease, wire: packet.wire, ...(packet.bootstrap ? { bootstrap: packet.bootstrap } : {}), ...(join ? { join, welcome: packet.welcome } : {}) };
@@ -159,7 +170,8 @@ export class SecureChatClient {
         await this.#api({ action: "reject-join", id: pending.id, sealed: await seal(this.invitation, `rejection:${pending.id}`, { rejected: true }) });
         return;
       }
-      const lease = await this.#claim();
+      const lease = await this.#claim(false);
+      if (!lease) return;
       // If admission changed while claiming, this request is no longer admissible.
       let packet: PreparedPacket;
       try { packet = await this.#crypto.prepareAdd(pending.id, pending.sealed); }
@@ -171,7 +183,8 @@ export class SecureChatClient {
       }
       await this.#publish(randomId(), lease.id, packet, pending.id);
     } else if (Date.now() - this.#lastRefresh > 5 * 60_000) {
-      const lease = await this.#claim();
+      const lease = await this.#claim(false);
+      if (!lease) return;
       try { await this.#publish(randomId(), lease.id, await this.#crypto.prepareRefresh()); }
       catch (error) { this.close(); throw error; }
     }
@@ -194,6 +207,7 @@ export class SecureChatClient {
     if (!this.#crypto.ready) throw new ChatApiError("Keep this tab open while an online participant connects you.", 409);
     if (interaction && !findMessage(this.#messages, interaction.target)) throw new ChatApiError("The original message is no longer available in this tab.", 409);
     const lease = await this.#claim(), id = randomId();
+    if (!lease) throw new ChatApiError("The conversation is busy. Your message was not sent. Try again shortly.", 409);
     // Catch eviction while catching up before any MLS generation is consumed.
     if (interaction && !findMessage(this.#messages, interaction.target)) {
       await this.#api({ action: "release", lease: lease.id });

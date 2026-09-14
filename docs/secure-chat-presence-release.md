@@ -12,6 +12,10 @@
 - An invitation with no surviving admitted session receives an explicit error. If surviving transports have stopped polling, new sign-in asks the guest to wait for an original tab to reconnect. A waiting guest receives an explicit error if the last admitted session leaves.
 - A Back to site link and a separate Start a new conversation action replace dead-end navigation. EN/RU guide and security review describe the implementation.
 
+## Write-lease contention fix
+
+A reproducible regression held another participant’s lease for 250 ms. The previous client exhausted eight immediate retries in roughly 75 ms and rejected the send before the lease was released. User sends now back off with jitter before encryption, allowing an abandoned 20-second lease to expire within a 25-second contention budget. Background admission and key refresh yield rather than expose routine contention as a connection error. The composer shows Sending / Отправляем and retains an unsent draft. Tests cover delayed lease release, four simultaneous writers without manual retries, background admission yielding and cancellation before encryption. Individual HTTP timeouts remain separate from the contention budget.
+
 ## Verification
 
 The [automated report](../public/secure-chat/reports/security-tests.md) contains the exact checks, raw TAP and source hashes. The regression cases cover presence timeout/reconnection/logout, metadata privacy, forged and duplicate profile bindings, immutable views, old relays, malformed snapshots, orphaned invitations, background admission, poll teardown and SPA session retention.

@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T17:15:25.652Z
+Generated: 2026-09-14T17:25:07.460Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**91 checks; PASSED. Technical self-review, not an independent audit.**
+**95 checks; PASSED. Technical self-review, not an independent audit.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -96,6 +96,10 @@ Exit: 0. [Raw TAP output](integration.tap).
 - PASS — poll wakeups do not overlap and teardown removes event listeners
 - PASS — SPA view detach and return retain identity, history and admission without a new login
 - PASS — invitations preserve the chat document path for same-tab hash navigation
+- PASS — send waits for another participant's write lease and delivers without manual retry
+- PASS — background admission yields to a held lease without reporting a connection failure
+- PASS — ending the session while waiting for a lease cancels sending before encryption
+- PASS — four concurrent writers deliver once each without user retries
 
 ## MLS retention and compromise scenarios (laboratory fixtures)
 
