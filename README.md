@@ -67,3 +67,5 @@ Questions or private security reports: [Telegram DM](https://t.me/mailsec).
 [Messenger release verification / Проверка обновления](docs/secure-chat-messenger-release.md) · [Initial production deployment](docs/deployment-verification.md).
 
 [Session return and presence verification / Возврат и статусы](docs/secure-chat-presence-release.md).
+
+[Session recovery deployment / Проверка восстановления на production](docs/secure-chat-reload-deployment.md).
