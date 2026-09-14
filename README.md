@@ -71,3 +71,5 @@ Questions or private security reports: [Telegram DM](https://t.me/mailsec).
 [Session recovery deployment / Проверка восстановления на production](docs/secure-chat-reload-deployment.md).
 
 Open Chat resumes the saved conversation. New chat explicitly ends that session. Legacy root invitations redirect to /secure-chat; the secret remains in the fragment.
+
+[Send recovery: production checks](docs/secure-chat-send-deployment.md).

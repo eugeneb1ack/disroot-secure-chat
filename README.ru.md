@@ -49,3 +49,5 @@ CHAT_LOCAL_PREVIEW=1 docker compose up -d --build
 [Session recovery deployment / Проверка восстановления на production](docs/secure-chat-reload-deployment.md).
 
 Open Chat возвращает в сохранённую беседу. «Новый чат» явно завершает текущую сессию. Старые приглашения с главной страницы переводятся на /secure-chat; секрет остаётся во фрагменте ссылки.
+
+[Проверка отправки и возврата после выкладки](docs/secure-chat-send-deployment.md).
