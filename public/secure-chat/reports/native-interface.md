@@ -14,7 +14,7 @@ A separate UI fixture using the actual message component reproduced a menu that 
 
 ## Executed checks
 
-- `npm run test:chat:report`: **114 passed** — 105 integration scenarios and nine MLS laboratory scenarios. [Machine-readable report](security-tests.json), [integration TAP](integration.tap), [MLS TAP](mls-ratchet.tap).
+- `npm run test:chat:report`: **115 passed** — 106 integration scenarios and nine MLS laboratory scenarios. [Machine-readable report](security-tests.json), [integration TAP](integration.tap), [MLS TAP](mls-ratchet.tap).
 - ESLint and an isolated Docker production build completed successfully.
 - Browser checks: reload restored the same temporary identity, message history, encrypted reply and reaction. Reply and reaction controls submitted actual test messages. Clicking outside the help panel and pressing Escape dismissed it; the conversation did not resize.
 - Responsive inspection: chat at 390 × 844, 320 × 568 and a reduced 390 × 450 viewport; Security in English and Russian at 320 × 568. DOM measurements found no horizontal overflow in the review's paragraphs or table cells. The threat-model table becomes vertical cards on small screens.
@@ -46,7 +46,7 @@ No user conversations, invitation secrets or private keys are included in this r
 
 ## Что проверено
 
-- `npm run test:chat:report`: **114 успешных проверок** — 105 интеграционных сценариев и девять лабораторных MLS. [JSON](security-tests.json), [интеграционный TAP](integration.tap), [MLS TAP](mls-ratchet.tap).
+- `npm run test:chat:report`: **115 успешных проверок** — 106 интеграционных сценариев и девять лабораторных MLS. [JSON](security-tests.json), [интеграционный TAP](integration.tap), [MLS TAP](mls-ratchet.tap).
 - ESLint и отдельная production-сборка в Docker прошли успешно.
 - В браузере перезагрузка вернула того же участника, сообщения, зашифрованный ответ и реакцию. Ответы и реакции проверены реальной отправкой тестовых сообщений. Нажатие вне справки и Escape закрыли её без изменения размеров переписки.
 - Проверены чат при 390 × 844, 320 × 568 и уменьшенной высоте 390 × 450, а также Security на английском и русском при 320 × 568. Измерения DOM не выявили горизонтального переполнения абзацев и ячеек. Таблица модели угроз на узком экране отображается карточками.
@@ -59,3 +59,10 @@ No user conversations, invitation secrets or private keys are included in this r
 Строка `This room no longer exists.` обнаружена в старой локальной dev-сборке и отсутствовала в проверенных текущих production-клиенте и relay. В пользовательской сессии ошибка не воспроизведена, поэтому она не объявляется следствием дефекта нескольких вкладок. Перезапуск relay или общий срок действительно удаляют состояние беседы из RAM; одна ссылка не позволяет восстановить его.
 
 В отчёте нет пользовательской переписки, секретов приглашений и приватных ключей. Браузерные проверки проведены в отдельной тестовой беседе.
+
+
+## Capacity regression / Очистка завершённых бесед
+
+The live production candidate rejected a new synthetic conversation with `The relay is at capacity.` Its application is healthy; this response comes from configured relay bounds. Code review identified that a room whose last admitted session had explicitly logged out still reserved a room slot until expiry. The regression test filled 16 rooms, set their presence offline, confirmed a seventeenth was rejected, logged out one owner, and attempted a replacement. It failed on the old code and passes after the fix. Fifteen offline admitted sessions remain recoverable; revoked key bindings retain their deadline. The complete suite passes 115 scenarios. This does not increase the 16-live-conversation bound or prove that every occupied production room is orphaned.
+
+Production-кандидат отклонил создание новой тестовой беседы с `The relay is at capacity.` Приложение исправно; ответ поступил из проверки лимитов relay. По коду обнаружено, что беседа занимала место до срока даже после явного выхода последнего допущенного участника. Регрессионный тест заполнил 16 бесед, перевёл их presence в офлайн, проверил отказ семнадцатой, завершил одну сессию и попытался создать замену. На старом коде тест падал, с исправлением проходит. Остальные 15 отключившихся участников сохраняют возможность вернуться, отозванные ключи остаются привязанными до прежнего срока. Полный набор содержит 115 успешных сценариев. Лимит 16 живых бесед не увеличен; тест не устанавливает, что все занятые production-беседы остались без участников.

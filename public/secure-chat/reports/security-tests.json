@@ -1,24 +1,24 @@
 {
   "schema": "disroot-chat-security-tests/v1",
-  "generatedAt": "2026-09-14T20:46:50.181Z",
+  "generatedAt": "2026-09-14T21:12:53.565Z",
   "runtime": "v26.8.2",
   "platform": "darwin/arm64",
   "classification": "Automated self-tests; not an independent audit or proof of security",
-  "gitHead": "95ad2be5a20c3cdc086fec09d100e383f5bbfc4c",
+  "gitHead": "2b09b4749d335236e924be18f35160cbce6c3cf7",
   "sourceSha256": {
     "lib/secure-chat-protocol.ts": "ea0ad4ab25670df049c420e853914f36e661fb0bd415eeb1aaa02ccf5b893ed9",
     "lib/secure-chat-invite.ts": "f487dff425901c461ac96dc59a867f3a281145dad55b6173f6532b79806b75fe",
     "lib/secure-chat-mls.ts": "d155de3e0abf32fa94062d35fe2f9f7012e6fa113387252a75143d64268c08f3",
     "lib/secure-chat-mls-adapter.ts": "32545ce180774d80daf5aaf112ed554dbdc9a0b99b3736abd4e9d94c0572c46b",
     "lib/secure-chat-client.ts": "9d1384a1fd927a2ee324429397a67b22234969ced4ed58648ccae012014e887e",
-    "lib/secure-chat-store.ts": "8a3a13816ed4c6af6d6f6240493f0acc65dd0da2089eac2a9e393f1c42221918",
+    "lib/secure-chat-store.ts": "10929a422618e0eed160b10b7c74dec9e59c7eec82d7bd3f931c4de5eb7df7bd",
     "lib/secure-chat-handler.ts": "ba989b31d21e67d0d20a80031c5cc30fe7b7a56625d43c027f7a2ef9414d5b6d",
     "lib/secure-chat-guard.ts": "a4794b43be5abccc44b0c3b6829f8ae7e6d34c0c48ef7f4901a75ea9fa398aa7",
     "app/api/secure-chat/route.ts": "c471ce096f55c14a14ec4d68a7a0c729ca4ce34c264dc438e3edd5ae6ba5a6c7",
     "scripts/secure-chat-relay.mjs": "163f41adc892a87de6fa2426e5ed0b75aac2a86a615025ade8db740a65024ced",
-    "lib/secure-chat-v2.test.mjs": "43f22f9731240ca716e08f37f595cd90970e4e60346cd42b28f3196d7504179c",
+    "lib/secure-chat-v2.test.mjs": "3f3599c9ba3128ab6506b51cb730ab45ef6d5667b7a0fd43ab903cba20fe090a",
     "tests/secure-chat/ratchet.test.mjs": "187c66bd607cc01cbc3c712ff5fb464f5db969ddc453441b7107df7e42cbf56c",
-    "package-lock.json": "fda4f1d4c21d65f86b19fa4031f947619e385b24b9a5d6f55c82ce1ee7e552f7",
+    "package-lock.json": "dff6b582344010d2207e57c8d67781ff16fadc6d6e519a460cac48e6a9d332dd",
     "lib/secure-chat-interactions.ts": "dedb9a21a8b81af84ed96def3100d1c44156de87ca048bc53026dcabaf48d213",
     "lib/secure-chat-session.ts": "78f948468b4638a7806de917c5bdfcab9e2c3c9e8c2498e2b201d81623245506",
     "lib/secure-chat-runtime.ts": "af99e847ee6c3cb1e345c35ab96efb55a7c935f9e70296fff450f76eaa129e24",
@@ -27,7 +27,7 @@
     "lib/secure-chat-browser-session.ts": "7c9acd3902aaf2b9538ae1b2157893c35c4acbd343f18f72d58e1c9a9d54cdc6"
   },
   "passed": true,
-  "total": 114,
+  "total": 115,
   "results": [
     {
       "suite": "Production integration and hostile inputs",
@@ -453,6 +453,10 @@
         },
         {
           "name": "mirrored tabs do not multiply relay polling or exhaust the owner's read quota",
+          "passed": true
+        },
+        {
+          "name": "room capacity reclaims closed conversations without evicting offline sessions",
           "passed": true
         }
       ],

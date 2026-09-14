@@ -1,10 +1,10 @@
 # Secure Chat — automated security checks
 
-Generated: 2026-09-14T20:46:50.181Z
+Generated: 2026-09-14T21:12:53.565Z
 
 Runtime: v26.8.2 (darwin/arm64)
 
-**114 checks; PASSED. Technical self-review, not an independent audit.**
+**115 checks; PASSED. Technical self-review, not an independent audit.**
 
 [Machine-readable report and source hashes](security-tests.json).
 
@@ -119,6 +119,7 @@ Exit: 0. [Raw TAP output](integration.tap).
 - PASS — legacy links: root invitations enter the standalone route without losing the secret fragment
 - PASS — durable outbox: interrupted refresh does not end the participant
 - PASS — mirrored tabs do not multiply relay polling or exhaust the owner's read quota
+- PASS — room capacity reclaims closed conversations without evicting offline sessions
 
 ## MLS retention and compromise scenarios (laboratory fixtures)
 

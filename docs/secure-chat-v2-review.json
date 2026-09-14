@@ -29,7 +29,7 @@
       [
         "06",
         "One deadline",
-        "The creator chooses one name and receives one invitation. A key is bound to one conversation. Everyone shares the deadline, at most 24 hours after creation; joins and key updates cannot extend it. The relay cleans expired rooms, ciphertext, grants, challenges and bindings every second and on requests. It has no chat database, disk archive or backup. Restarting it clears active chats sooner. The relay keeps at most 256 events or 1,000,000 encoded characters per conversation; clients retain at most 256 readable messages, including their encrypted local checkpoint."
+        "The creator chooses one name and receives one invitation. A key is bound to one conversation. Everyone shares the deadline, at most 24 hours after creation; joins and key updates cannot extend it. The relay cleans expired rooms, ciphertext, grants, challenges and bindings every second and on requests. It has no chat database, disk archive or backup. Restarting it clears active chats sooner. The relay keeps at most 256 events or 1,000,000 encoded characters per conversation; clients retain at most 256 readable messages, including their encrypted local checkpoint. When the 16-conversation limit is reached, allocation reclaims rooms with no surviving admitted session before rejecting a new chat. Temporary offline status never triggers reclamation. Revoked transport-key bindings remain reserved until their original deadline."
       ],
       [
         "07",
@@ -54,7 +54,7 @@
       [
         "11",
         "Return after reload",
-        "The browser keeps an AES-256-GCM encrypted checkpoint in IndexedDB until the shared deadline. It includes the temporary identity, current MLS state, relay token and up to 256 locally received messages. The non-extractable wrapping CryptoKey is stored by the same browser; neither it nor the checkpoint is uploaded. Reloading or reopening the same invitation in the same profile and origin restores that participant without signing in again. Web Locks permit only one active MLS writer; other tabs use BroadcastChannel. Closing the page suspends the session without logout. New chat ends the current session, deletes the local record and revokes its transport token. A private browser window, cleared site data, storage eviction or switching origin/device can remove or hide the saved session. The relay must still exist, and its bounded event window must cover the missed updates."
+        "The browser keeps an AES-256-GCM encrypted checkpoint in IndexedDB until the shared deadline. It includes the temporary identity, current MLS state, relay token and up to 256 locally received messages. The non-extractable wrapping CryptoKey is stored by the same browser; neither it nor the checkpoint is uploaded. Reloading or reopening the same invitation in the same profile and origin restores that participant without signing in again. Web Locks permit only one active MLS writer; other tabs use BroadcastChannel. Closing the page suspends the session without logout. New chat ends the current session, deletes the local record and revokes its transport token. A private browser window, cleared site data, storage eviction or switching origin/device can remove or hide the saved session. The relay must still exist, and its bounded event window must cover the missed updates. Only the owner polls the relay; other tabs receive its verified view without multiplying network requests."
       ],
       [
         "12",
@@ -119,7 +119,7 @@
       [
         "06",
         "Общий срок",
-        "Создатель задаёт одно название и получает одну ссылку. Ключ связан только с одной беседой. У всех общий срок — не более 24 часов с создания. Подключения и обновления ключей не продлевают его. Раз в секунду и при запросах сервер удаляет истёкшие беседы, шифротекст, допуски, запросы на подпись и привязки. Нет базы чата, файлового архива и резервных копий. Перезапуск очищает активные беседы раньше. Сервер хранит не более 256 событий или 1 000 000 символов зашифрованных событий на беседу, клиент — не более 256 прочитанных сообщений, включая зашифрованную локальную запись."
+        "Создатель задаёт одно название и получает одну ссылку. Ключ связан только с одной беседой. У всех общий срок — не более 24 часов с создания. Подключения и обновления ключей не продлевают его. Раз в секунду и при запросах сервер удаляет истёкшие беседы, шифротекст, допуски, запросы на подпись и привязки. Нет базы чата, файлового архива и резервных копий. Перезапуск очищает активные беседы раньше. Сервер хранит не более 256 событий или 1 000 000 символов зашифрованных событий на беседу, клиент — не более 256 прочитанных сообщений, включая зашифрованную локальную запись. При достижении лимита 16 бесед создание новой сначала освобождает место, занятое беседами без сохранившейся допущенной сессии. Временный статус офлайн не запускает эту очистку. Привязки отозванных транспортных ключей сохраняются до исходного срока."
       ],
       [
         "07",
@@ -144,7 +144,7 @@
       [
         "11",
         "Возврат после перезагрузки",
-        "Браузер хранит зашифрованное AES-256-GCM состояние в IndexedDB до общего срока беседы: временную личность, текущее состояние MLS, токен relay и до 256 полученных сообщений. Неэкспортируемый CryptoKey для защиты записи хранится этим же браузером; ни ключ, ни запись не загружаются на сервер. Перезагрузка или повторное открытие своей ссылки в том же профиле и origin восстанавливает участника без нового входа. Web Locks допускает только одного активного MLS-отправителя; другие вкладки используют BroadcastChannel. Закрытие страницы приостанавливает сессию без logout. «Новый чат» удаляет локальную запись и отзывает транспортный токен. Приватный режим, очистка или вытеснение данных, другой origin или устройство могут удалить либо сделать сессию недоступной. Relay должен продолжать работать, а пропущенные обновления — помещаться в его ограниченное окно событий."
+        "Браузер хранит зашифрованное AES-256-GCM состояние в IndexedDB до общего срока беседы: временную личность, текущее состояние MLS, токен relay и до 256 полученных сообщений. Неэкспортируемый CryptoKey для защиты записи хранится этим же браузером; ни ключ, ни запись не загружаются на сервер. Перезагрузка или повторное открытие своей ссылки в том же профиле и origin восстанавливает участника без нового входа. Web Locks допускает только одного активного MLS-отправителя; другие вкладки используют BroadcastChannel. Закрытие страницы приостанавливает сессию без logout. «Новый чат» удаляет локальную запись и отзывает транспортный токен. Приватный режим, очистка или вытеснение данных, другой origin или устройство могут удалить либо сделать сессию недоступной. Relay должен продолжать работать, а пропущенные обновления — помещаться в его ограниченное окно событий. Relay опрашивает только основная вкладка; остальные получают её проверенное состояние без дополнительных сетевых запросов."
       ],
       [
         "12",

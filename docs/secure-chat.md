@@ -118,3 +118,7 @@ Nginx must disable site access logs and chat request error logs, keep bodies in 
 
 
 Before sending any ciphertext, the client durably checkpoints the exact packet and its candidate MLS state. After reload, an accepted write is acknowledged through an identical-ciphertext retry; an unpublished packet can use a new lease only at the same relay sequence. Conflicting or missing state fails closed. Welcome is checkpointed before its relay acknowledgement. Checkpoint replacement uses strict IndexedDB transactions and a revision check; storage failure prevents publication.
+
+## Closed conversations and capacity
+
+When the 16-conversation limit is reached, allocation reclaims rooms with no surviving admitted session before rejecting a new chat. Temporary offline status never triggers reclamation. Revoked transport-key bindings remain reserved until their original deadline.

@@ -51,6 +51,16 @@ export class SecureChatStore {
     // An unacknowledged Welcome can still establish a surviving participant.
     return [...room.members].some(key => this.sessions.get(key)?.ready);
   }
+  private reclaimClosedRooms() {
+    if (this.rooms.size < 16) return;
+    // Logout revokes the token. With no surviving admitted session, nobody can
+    // recover or admit a guest: retaining its ciphertext must not block new chats.
+    // lastSeen is deliberately irrelevant; a sleeping browser can still return.
+    for (const [id, room] of this.rooms) if (!this.canAdmit(room)) this.rooms.delete(id);
+    this.clean();
+    for (const [id, challenge] of this.challenges) if (!challenge.request.create && !this.rooms.has(challenge.request.room)) this.challenges.delete(id);
+    // Keep revoked key bindings until their original deadline to prevent reuse.
+  }
   challenge(input: LoginRequest, origin: string) {
     this.clean(); this.throttle(this.attempts, 120, 60_000);
     if (this.challenges.size >= 64 || this.sessions.size >= 256 || this.keyBindings.size >= 512) throw new ChatError("The relay is at capacity.", 429);
@@ -63,6 +73,7 @@ export class SecureChatStore {
     if (input.create) {
       blob(input.manifest, 4096);
       if (this.rooms.has(input.room)) throw new ChatError("Conversation already exists.", 409);
+      this.reclaimClosedRooms();
       if (this.rooms.size >= 16) throw new ChatError("The relay is at capacity.", 429);
     } else {
       const room = this.rooms.get(input.room);
@@ -96,6 +107,7 @@ export class SecureChatStore {
       let room = this.rooms.get(request.room);
       if (request.create) {
         if (room) throw new ChatError("Conversation already exists.", 409);
+        this.reclaimClosedRooms();
         if (this.rooms.size >= 16) throw new ChatError("The relay is at capacity.", 429);
         room = { expires: request.expires, capHash, manifest: request.manifest!, seq: 0, events: [], bytes: 0, members: new Set(), pending: new Map() };
         this.rooms.set(request.room, room);
